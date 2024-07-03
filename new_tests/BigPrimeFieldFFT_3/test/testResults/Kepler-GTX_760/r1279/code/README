@@ -1,0 +1,103 @@
+FFT_basic_function.cu: arithmetic operations in Z/(r^8 + 1)Z for
+r = 2^63 + 2^34. Includes also routines for FFT such as twiddle
+factor matrix and permutation
+==> ToDo: move that code to the library
+
+--------------------------------------------------------------------
+(2^4) FFT16.cu: This program implements one FFT with size 16 on big
+prime field. It uses one block, one thread to calculate the FFT (unroll
+version, including four rounds). The input data is FFT_Data_16.dat,
+which is 16 big elements, equally, 16*8=128 unsigned number.
+==> ToDo: use the library functions (when in place) for computing
+    in  Z/(r^8 + 1)Z
+
+--------------------------------------------------------------------
+(2^8) FFTBlock.cu: This program calculates 24 FFT(with size 16) on big
+prime field. It uses one block, 384 thread(12 warps) to calculate
+FFT(unroll version, including four rounds). The input data is
+FFT_data_Block.dat, which is 24*16=384 elements, equally, 384*8=3072
+unsigned number. The output file is FFT_Data_Block_output.dat, which
+also includes 3072 unsigned number
+
+--------------------------------------------------------------------
+(2^8) FFT256.cu This program implements 16 FFT with size 16 on big
+prime field. It uses one block, 256 thread to calculate the FFT(block
+strategy, based on FFT16). The input data is FFT_256_input.dat, which
+contains 256 big elements, equally, 256*8=2048 unsigned numbers.
+
+
+--------------------------------------------------------------------
+(2^12) FFT4096.cu This program implements FFT with size 4096 on big
+prime field. The input data is FFT_4096_input.dat, which contains 4096
+big elements, equally, 4096*8 unsigned numbers. The output data is
+FFT_4096_output.dat.
+
+
+--------------------------------------------------------------------
+(2^16) FFT65536.cu This program implements FFT with size 65536 on big
+prime field. The input data is FFT_65536_input.dat, which contains
+65536 big elements, equally, 65536*8 unsigned numbers. The output data
+is FFT_65536_output.dat.
+
+--------------------------------------------------------------------
+(2^20) FFT1048576.cu This program implements FFT with size 1048576 on
+big prime field. The input data is FFT_1048576_input.dat, which
+contains 1048576 big elements, equally, 1048576*8 unsigned
+numbers. The output data is FFT_1048576_output.dat.
+
+--------------------------------------------------------------------
+(2^24) FFT16777216.cu This program implements FFT with size 16777216
+on big prime field. The input data is FFT_16777216_input.dat, which
+contains 16777216 big elements, equally, 16777216*8 unsigned
+numbers. The output data is FFT_16777216_output.dat.
+
+--------------------------------------------------------------------
+bigAdditionWithSM.cu This program calculates big number addition using
+shared memory. The input file is addition_benchmark_data.dat. There is
+no output result file. The program uses 512 blocks, and 256 threads in
+one block. It calculates 512*256 pair addition of big numbers.
+
+--------------------------------------------------------------------
+bigAdditionWithoutSM.cu The function of this file is same to
+bigAdditionWithSM.cu. Just one different thing is without using shared
+memory.
+
+--------------------------------------------------------------------
+normalAdditionWithSM.cu
+
+--------------------------------------------------------------------
+normalAdditionWithoutSM.cu
+
+--------------------------------------------------------------------
+bigMultiplicationWithSM.cu
+
+-------------------------------------------------------------------------------
+bigMultiplicationWithoutSM.cu
+// Arithmetic operations in in Z/(R^8 + 1)Z
+
+-------------------------------------------------------------------------------
+normalDoubleMultiplicationWithSM.cu This program calculates normal
+number multiplication using shared memory and double multiplication
+method. The input file is small_number_benchmark.dat. There is no
+output result file. The program uses 512 blocks, and 256 threads in
+one block. It calculates 512*256 pair addition of big numbers.
+// Test for multiplication via floating point arithmetics
+
+-------------------------------------------------------------------------------
+normalDoubleMultiplicationWithoutSM.cu
+// Test for multiplication via floating point arithmetics
+
+-------------------------------------------------------------------------------
+normalMontMultiplicationWithSM.cu
+// Test for multiplication via Montgomery reduction
+
+-------------------------------------------------------------------------------
+normalMontMultiplicationWithoutSM.cu
+// Test for multiplication via Montgomery reduction
+
+-------------------------------------------------------------------------------
+unsignedMultiplicationWithSM.cu 
+// Arithmetics for the big prime field
+// comments in the file
+
+nvcc unsignedMultiplicationWithSM.cu -o unsignedMultiplicationWithSM -arch=sm_20 --ptxas-options=-v

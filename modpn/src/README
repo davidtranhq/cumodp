@@ -1,0 +1,90 @@
+#######################################
+/* Authors: Xin Li <xli96@csd.uwo.ca>, Marc Moreno Maza <moreno@csd.uwo.ca> */
+/* Copyright (c) 2009 by Marc Moreno Maza.  All rights reserved             */
+#######################################
+# comment out _mcompile_ in Types.h for stand-alone compilation
+#######################################
+
+#For AMD 64-bit (default)
+make clean
+make ARCH=LINUXINTEL64
+
+###################
+#Intel Linux 32 machine
+make clean 
+make ARCH=LINUXINTEL32
+
+###################
+#For MAC 64-bit
+make clean
+make ARCH=MAC64
+
+###################
+#For Intel Mac 32-bit
+make clean
+make ARCH=MAC32
+
+###################
+#For Sparc Solaris 64-bit
+bash
+gmake clean
+gmake ARCH=SOLARIS64
+
+###################
+#For PPC 64-bit
+sh
+make clean
+make ARCH=PPC64
+
+###################
+#For Windows (32/64-bit)
+make clean
+make ARCH=WINDOWS
+
+#######################################
+TEST.c
+======
+- This is a sanity test suite for the modpn library
+- It is compiled by "make test"
+- Then we run it by "make run"
+- In particular, with 7 as first arg, the binary TEST
+  is testing the bivariate solver
+  ==> this requires the SySPool data basis
+      and to set the env. variable SYSPOOL_HOME to it
+
+Bivariate solver as a stand alone binary
+========================================
+The top-level code  is in solve2.c
+1/ Compile libmodpn.so
+2/ The target "bivariateSolver" is OBSELETE
+3/ In order to use the bivariateSolver as a stand alone
+   binary, simply use TEST with 7 as first argument.
+   See above
+
+Running the Bivariate solver from Maple
+=======================================
+This assumes that the Maple interface
+of modpn is available in Maple (by typing with(modpn))
+The cumodp user can update this library, if necessaty
+See the file README.cumodp_user and the aliases in its
+.bashrcfile or at the end of this section
+
+1/ We start "smaple"
+2/ We can use "modpn:-BivariateSolve"
+    OR 
+   we use RegularChains:-TRDmodpnBivariateSolve
+    OR
+   we use Triangularize with opetions "c", "cuda" or "smart"
+3/ The SysPool project has a Category dedicated to the
+   bivariate solver (running from Maple)
+   Therein, the directory benchmarks_report/ 
+   contains timings
+   The directory   BivariateSystems   contain input bivariate systems
+
+export MAPLELIB=$HOME/maple/lib
+
+alias mysmarch='smarch -c $MAPLELIB/maple.mla'
+alias mysmint='smint -t15 -I $MAPLELIB $MAPLELIB/modpn/src/modpn.mpl'
+alias mysload='sload -I $MAPLELIB -b $MAPLELIB/maple.mla $MAPLELIB/modpn/src/modpn.mpl'
+alias rcsload='sload -I $MAPLELIB -b $MAPLELIB/maple.mla $MAPLELIB/RegularChains/src/RegularChains.mpl'
+alias maple='smaple'

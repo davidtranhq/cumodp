@@ -1,0 +1,65 @@
+restart;
+with(ArrayTools):
+r:=2^63+2^34;
+p:=r^8+1:
+xs:=convert([2,3,4,0,0,1,2,0],Array);
+ys:=convert([9223372054034644991,9223372054034644990,9223372054034644989,9223372054034644988,9223372054034644987,9223372054034644986,9223372054034644985,9223372054034644991],Array);
+
+
+bigSub:=proc(xs,ys,r,p)
+  local c,us,ui,i,j,nonzero,x,y,u1,u2,pos;
+  c:=0:
+  us:=Array(1..8):
+  for i from 1 to 8 do
+    if xs[i] < ys[i]+c then      
+      ui := r-ys[i]+xs[i]-c;
+      c := 1 ;
+    else
+      ui := xs[i]-ys[i]-c;
+      c := 0;
+    end if:
+    us[i]:=ui;
+  end do:
+  
+  if c=1 then
+    pos:=0:
+    for i from 1 to 8 do 
+      if us[i] <> r-1 then
+        pos:=i:
+        break;
+      end if:
+    end do:
+    if pos>0 then
+      for j from 1 to pos-1 do
+        us[j]:=0:
+      end do:
+      us[pos]:=us[pos]+1:
+    else
+      us[1]:=2^64-1;
+      for i from 2 to 8 do
+        us[i]:=0:
+      end do:
+    end if:
+  end if:
+  
+  #verify
+  x:=0:
+  y:=0:
+  u1:=0:
+  for i from 1 to 8 do
+    x := x + xs[i]*r^(i-1):
+    y := y + ys[i]*r^(i-1):
+    u1 := u1 + us[i]*r^(i-1):
+  end do:
+  u2:=(x-y) mod p;
+  if u1-u2=0 then
+    print("verify right");
+  else
+    print("verify wrong");
+    print(cat("u1=",u1,",u2=",u2));
+  end if:
+  return us;  
+end proc:
+
+
+bigSub(xs,ys,r,p);

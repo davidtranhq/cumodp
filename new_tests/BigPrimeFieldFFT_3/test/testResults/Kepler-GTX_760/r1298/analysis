@@ -1,0 +1,10 @@
+
+1. two methods for padding
+	pos referse to position in shared memory
+
+	method  I) pos = tid * 8 + (tid/4)%8;
+	method II) pos = tid * 8 + (tid/4)  ;
+
+2. based on profiling results, the padding I is faster for both mutliplication and addition.
+
+3.

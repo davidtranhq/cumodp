@@ -1,0 +1,16 @@
+operation = 4, iteration = 1, shuffled = 1, paddingMethod = 0, input = data_0_11_22_1m, vectorSize = 131072 
+Shuffled: nBlocks = 256, blockSize= 256 , permutationStride = 131072 
+Elapsed-GPU-Time = 4.245
+===========================
+operation = 4, iteration = 1, shuffled = 1, paddingMethod = 0, input = data_0_11_22_1m, vectorSize = 262144 
+Shuffled: nBlocks = 512, blockSize= 256 , permutationStride = 262144 
+Elapsed-GPU-Time = 8.542
+===========================
+operation = 4, iteration = 1, shuffled = 1, paddingMethod = 0, input = data_0_11_22_1m, vectorSize = 524288 
+Shuffled: nBlocks = 1024, blockSize= 256 , permutationStride = 524288 
+Elapsed-GPU-Time = 16.871
+===========================
+operation = 4, iteration = 1, shuffled = 1, paddingMethod = 0, input = data_0_11_22_1m, vectorSize = 1048576 
+Shuffled: nBlocks = 2048, blockSize= 256 , permutationStride = 1048576 
+Elapsed-GPU-Time = 33.380
+===========================

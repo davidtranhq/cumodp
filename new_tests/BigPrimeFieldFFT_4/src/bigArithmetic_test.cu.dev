@@ -1,0 +1,478 @@
+#include <time.h>
+#include <stdio.h>
+#include <unistd.h>
+
+/* data manipulation auxiliary functions*/
+#include "dataTools.h"
+
+
+//#include "bigArithmeticKernels.cuh"
+#include "BigPrimeFieldFFT_4/bigArithmetic_host_P4.h"
+
+/*************************************************************
+ * Main Function
+ *************************************************************/
+int
+main (int argc, char *argv[])
+{
+	data fd;
+	usfixn64 *xVector, *yVector, *uVector;
+	usfixn64 *device_xVector, *device_yVector, *device_uVector;
+//	usfixn64 *parameters;
+	usfixn64 *device_parameters;
+
+//	cudaEvent_t start, stop;
+	float elapsedTime;
+
+//	initializeData(argc, argv, fd);
+
+	/******************************
+	 * opAdd:=0,
+	 * opMultiplication:=1,
+	 * opSubtraction:=2,
+	 * opCyclicShift:=3
+	 * ????
+	 ******************************/
+
+//	int operation = 0;
+//	int nIterations = 1;	//number of iterations to repeat
+//	int shuffle = 0;  //transpose the input matrix from Nx8 to 8xN
+//	int paddingMethod = 0; //no padding
+//	int inputVectorSize = 1024; //1k elements
+	fd.operation = 0;
+	fd.nIterations = 1;	//number of iterations to repeat
+	fd.shuffle = 0;  //transpose the input matrix from Nx8 to 8xN
+	fd.paddingMethod = 0; //no padding
+	fd.inputVectorSize = 1024; //1k elements
+
+	char projectPath[1024], dataSet[1024], xDataPath[1024], yDataPath[1024],
+			uDataPath[1024];
+
+//	int coefficientSize = 8;
+//	int strideSize = TN;
+//	int dynamicMemSize = coefficientSize * TN;
+//	int usingDynamicMem = 1;
+//	int nParameters = 8;
+//	usfixn64 BN = inputVectorSize / TN;
+
+	fd.coefficientSize = COEFFICIENT_SIZE;
+	fd.strideSize = TN;
+	fd.dynamicMemSize = fd.coefficientSize * TN;
+//	fd.usingDynamicMem = 1;
+	fd.nParameters = 16;
+	fd.BN = fd.inputVectorSize / TN;
+
+//	int nBlocks, blockSize;
+//	int permutationStride = 32;
+//	int tranposeBlockSize = 32; //achieving highest occupancy and least time for doing permutation (block by block transposition)
+//	char *cumodp_home;
+//	int i = 0;
+//	dim3 gridSize;
+
+//	fd.permutationStride = 32;
+	fd.transposeBlockSize = 32; //achieving highest occupancy and least time for doing permutation (block by block transposition)
+	char *cumodp_home;
+
+	cumodp_home = getenv ("CUMODP_HOME");
+	sprintf (projectPath, "%s/new_tests/BigPrimeFieldFFT_4", cumodp_home);
+
+//	sprintf(dataSet, "%s", "data_2_11_22_1k");
+//	sprintf(dataSet, "%s", "data_3_11_22_1k");
+//	sprintf(dataSet, "%s", "data_2_11_22_64k");
+//	sprintf(dataSet, "%s", "data_0_11_22_1m");
+//	inputVectorSize = 1024* 1024;
+
+//	sprintf(dataSet, "%s", "data_3_11_22_1k");
+	sprintf (dataSet, "%s", "data_2_11_22_1k");
+	fd.inputVectorSize = 1024;
+
+//	sprintf(dataSet, "%s", "data_3_11_22_1m");
+//	inputVectorSize = 1024*1024;
+
+//	sprintf(dataSet, "%s", "data_2_11_22_64k");
+//	inputVectorSize = 64 * 1024;
+
+//	sprintf(dataSet, "%s", "data_2_11_22_1m");
+//	inputVectorSize = 1 * 1024 * 1024;
+
+//operation, iteration, shuffle, padding, dataSet, inputVectorsize=1024
+	if (argc > 1)
+		fd.operation = atoi (argv[1]);
+	if (argc > 2)
+		fd.nIterations = atoi (argv[2]);
+	if (argc > 3)
+		fd.shuffle = atoi (argv[3]);
+	if (argc > 4)
+		fd.paddingMethod = atoi (argv[4]);
+	if (argc > 5)
+		sprintf (dataSet, "%s", argv[5]);
+	if (argc > 6)
+	{
+		fd.inputVectorSize = atoi (argv[6]);
+		fd.BN = (fd.inputVectorSize + TN - 1) / TN;
+	}
+
+	printf ("inputVectorSize=%lu \n", fd.inputVectorSize);
+
+	/*************************************************/
+//	fd.nIterations = N_ITERATIONS;
+	/*************************************************/
+
+	sprintf (xDataPath, "%s/test/data/%s/xData", projectPath, dataSet);
+	sprintf (yDataPath, "%s/test/data/%s/yData", projectPath, dataSet);
+	sprintf (uDataPath, "%s/test/tmp/uData_cuda", projectPath);
+
+//  fd.dynamicMemSize = computeDynamicMemSize (fd.paddingMethod,
+//					     fd.coefficientSize);
+
+	xVector = (usfixn64*) malloc (
+			sizeof(usfixn64) * fd.inputVectorSize * fd.coefficientSize);
+	yVector = (usfixn64*) malloc (
+			sizeof(usfixn64) * fd.inputVectorSize * fd.coefficientSize);
+	uVector = (usfixn64*) malloc (
+			sizeof(usfixn64) * fd.inputVectorSize * fd.coefficientSize);
+
+	fd.parameters = (usfixn64*) malloc (sizeof(usfixn64) * fd.nParameters);
+	memset (fd.parameters, 0x00, sizeof(usfixn64) * fd.nParameters);
+
+	fd.permutationStride = fd.inputVectorSize;
+//	fd.permutationStride = 32;
+
+	fd.parameters[0] = fd.operation;
+	fd.parameters[1] = fd.nIterations;
+	fd.parameters[2] = fd.paddingMethod;
+	fd.parameters[3] = fd.dynamicMemSize;
+	fd.parameters[4] = fd.strideSize;
+	fd.parameters[5] = fd.permutationStride;
+	fd.parameters[6] = fd.shuffle;
+	fd.parameters[7] = fd.inputVectorSize;
+	fd.parameters[8] = fd.coefficientSize;
+//	fd.parameters[9] = ?;
+//	fd.parameters[10] = ?;
+//	fd.parameters[11] = ?;
+//	fd.parameters[12] = ?;
+//	fd.parameters[13] = ?;
+//	fd.parameters[14] = ?;
+//	fd.parameters[15] = ;//multiplication step
+
+//instead, read x and y from files xData and yData
+	xVector = readVectorFromFile (xVector, fd.inputVectorSize, fd.coefficientSize,
+																xDataPath);
+	yVector = readVectorFromFile (yVector, fd.inputVectorSize, fd.coefficientSize,
+																yDataPath);
+
+//	use 8-byte shared Mem banks as we are using usfixn64 for digits
+	cudaDeviceSetSharedMemConfig (cudaSharedMemBankSizeEightByte);
+
+//	cudaEventCreate(&start);
+//	cudaEventCreate(&stop);
+
+	cudaEventCreate (&fd.startEvent);
+	cudaEventCreate (&fd.stopEvent);
+
+	cudaMalloc ((void **) &device_xVector,
+							sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize);
+	cudaMalloc ((void **) &device_yVector,
+							sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize);
+//	cudaMalloc((void **) &device_uVector,
+//			sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize);
+//	cudaMemset(device_uVector, 0x00,
+//			sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize);
+
+	cudaMalloc ((void **) &device_parameters, sizeof(usfixn64) * fd.nParameters);
+	cudaMemcpy (device_xVector, xVector,
+							sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize,
+							cudaMemcpyHostToDevice);
+	cudaMemcpy (device_yVector, yVector,
+							sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize,
+							cudaMemcpyHostToDevice);
+	cudaMemcpy (device_parameters, fd.parameters,
+							sizeof(usfixn64) * fd.nParameters, cudaMemcpyHostToDevice);
+
+//	cudaMemcpyToSymbol(const_device_parameters, fd.parameters,
+//			sizeof(usfixn64) * fd.nParameters);
+
+//	short *device_permutationParameters;
+//	cudaMalloc((void**) &device_permutationParameters, 8 * sizeof(unsigned short));
+
+//	printf("operation = %d, iteration = %d, shuffled = %d, paddingMethod = %d, input = %s, vectorSize = %d \n", operation, nIterations, shuffle, paddingMethod, dataSet, inputVectorSize);
+//	shuffle = 1;
+
+	if (fd.shuffle == 1)
+	{
+//		tranposeBlockSize=32;
+//permutate (X, nRows = N, nCols = 8, stride = N);
+//permutate (Y, nRows = N, nCols = 8, stride = N);
+//		xVector = blockPermutation (xVector, fd.inputVectorSize, fd.coefficientSize,
+//																fd.permutationStride);
+//		yVector = blockPermutation (yVector, fd.inputVectorSize, fd.coefficientSize,
+//																fd.permutationStride);
+
+		xVector = simpleTranspose (xVector, fd.inputVectorSize, fd.coefficientSize);
+		yVector = simpleTranspose (yVector, fd.inputVectorSize, fd.coefficientSize);
+//			printPermutatedVectorToFile(xVector, fd.inputVectorSize, fd.coefficientSize, fd.permutationStride, "xvecotr");
+//		printVector(xVector, fd.inputVectorSize, fd.permutationStride, "xVector");
+		cudaMemcpy (device_xVector, xVector,
+								sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize,
+								cudaMemcpyHostToDevice);
+		cudaMemcpy (device_yVector, yVector,
+								sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize,
+								cudaMemcpyHostToDevice);
+
+////		if(argc>7)
+////			permutationStride = atoi(argv[7]);
+////		if(argc>8)
+////			tranposeBlockSize = atoi(argv[8]);
+//		cudaEventRecord(start, 0);
+//		blockPermutation_gpu(device_xVector, device_permutationParameters, inputVectorSize, coefficientSize, permutationStride, tranposeBlockSize);
+//		blockPermutation_gpu(device_yVector, device_permutationParameters, inputVectorSize, coefficientSize, permutationStride, tranposeBlockSize);
+//		cudaEventRecord(stop, 0);
+//		cudaEventSynchronize(stop);
+//		cudaEventElapsedTime(&elapsedTime, start, stop);
+//		cudaMemcpy(uVector, device_uVector, sizeof(usfixn64) * coefficientSize * inputVectorSize, cudaMemcpyDeviceToHost);
+//		printf("Elapsed-GPU-Time for Permutation = %f (ms) \n ================== \n", elapsedTime);
+
+//		cudaMemcpy(xVector, device_xVector, inputVectorSize*coefficientSize*sizeof(usfixn64), cudaMemcpyDeviceToHost);
+//		cudaMemcpy(yVector, device_yVector, inputVectorSize*coefficientSize*sizeof(usfixn64), cudaMemcpyDeviceToHost);
+//		printPermutatedVectorToFile(xVector, inputVectorSize, coefficientSize, permutationStride, "xData_permutated");
+//		printPermutatedVectorToFile(yVector, inputVectorSize, coefficientSize, permutationStride, "yData_permutated");
+	}
+
+//		if (argc > 7)
+//			permutationStride = atoi(argv[7]);
+//		if (argc > 8)
+//			blockSize = atoi(argv[8]);
+
+//	parameters[5] = permutationStride;
+//	cudaMemcpy(device_parameters, parameters, sizeof(short) * nParameters, cudaMemcpyHostToDevice);
+
+	printf (
+			"operation = %d, iteration = %d, shuffled = %d, paddingMethod = %d, input = %s, vectorSize = %d \n",
+			fd.operation, fd.nIterations, fd.shuffle, fd.paddingMethod, dataSet,
+			fd.inputVectorSize);
+
+//fd.dynamicMemSize = fd.blockSize * fd.coefficientSize;
+	fd.blockSize = BLOCK_SIZE;
+	fd.device_xVector = device_xVector;
+	fd.device_yVector = device_yVector;
+	fd.device_uVector = device_uVector;
+	fd.device_parameters = device_parameters;
+
+	/****************************************
+	 * check if input vector is a power of K,
+	 * if yes, e=log(N,K)
+	 * if no, return -1
+	 ***************************************/
+	{
+		fd.K = 2 * COEFFICIENT_SIZE; //K=16 for k=8
+		//e= log (inputVectorSize, K);
+		fd.e = log2f (fd.inputVectorSize) / log2f (fd.K);
+		if (fd.inputVectorSize != pow (fd.K, fd.e))
+		{
+			printf ("\ninputVectorSize does not match K^e! (K=%d, e=%d) \n\n", fd.K,
+							fd.e);
+//			return -1;
+		}
+	}
+	cudaDeviceSetCacheConfig (cudaFuncCachePreferL1);
+//
+	//commented
+	host_init_device_pow_omega_16w (&fd, projectPath);
+
+	host_init_fft32_shNo (&fd);
+
+	host_init_multiplication_permutated (&fd);
+//	return -1;
+	switch (fd.operation)
+		{
+		case 0:
+			host_addition (&fd);
+			break;
+
+		case 1:
+			host_multiplication (&fd);
+			break;
+
+		case 2:
+			host_subtraction (&fd);
+			break;
+
+		case 3:
+			host_cyclicShift (&fd);
+			break;
+
+//		case 4:
+//			host_fft16 (&fd);
+//			break;
+
+//		case 5:
+//			host_fft256 (&fd);
+//			break;
+
+//		case 6:
+//			host_fft4k (&fd);
+//			break;
+
+//		case 7:
+//			host_fft16k (&fd);
+//			break;
+
+//		case 8:
+//			host_fft64k (&fd);
+//			break;
+//
+//		case 9:
+//			host_fft2 (&fd);
+////		operation_9(&fd);
+//			break;
+
+		case 10:
+			host_multiplication (&fd);
+			break;
+
+//		case 11:
+//			host_permutation_16 (&fd);
+//			break;
+
+//		case 12:
+//			host_multiplication_omega (&fd);
+//			break;
+
+//		case 13:
+//			host_permutation_256 (&fd);
+//			break;
+
+		case 14:
+			host_fft_general (&fd);
+			break;
+
+//		case 16:
+//			host_mulLong (&fd);
+			break;
+//	case 15:
+//			host_fft_general_odd(&fd);
+//			break;
+
+//		case 17:
+//			host_permutation_256_general (&fd);
+			break;
+//		case 18:
+//			host_permutation_2_general (&fd);
+//			break;
+
+		case 19:
+			host_init_device_pow_omega_16w (&fd, projectPath);
+			break;
+		case 20:
+			host_twiddle (&fd);
+			break;
+
+		case 21:
+			host_fft32_permutated (&fd);
+			break;
+
+		case 22:
+			printf ("fd/32 = %lu \n", fd.inputVectorSize / 32);
+//			host_transposition (&fd, fd.inputVectorSize / 32, 32);
+//			host_transposition (&fd, 32, fd.inputVectorSize / 32);
+			/* to verify results, compute
+			 * host_tranposition(fd,k,m) and host_tranposition(fd,m,k)
+			 * then if correct, you get the original input vector
+			 */
+			host_transposition (&fd, 64, 128);
+			host_transposition (&fd, 128, 64);
+			break;
+
+		case 23:
+			host_fft1k (&fd);
+			break;
+
+		case 24:
+			host_reduction (&fd);
+			break;
+
+		}
+
+	/***********************************************************/
+
+//	cudaThreadSynchronize();
+	cudaEventRecord (fd.stopEvent, 0);
+	cudaDeviceSynchronize ();
+	/***********************************************************/
+	cudaError_t lastError = cudaGetLastError ();
+//	if (cudaSuccess != cudaGetLastError())
+	if (cudaSuccess != lastError)
+	{
+		printf ("Error! = %s \n", cudaGetErrorString (lastError));
+		return 0;
+	}
+	/***********************************************************/
+
+	cudaEventSynchronize (fd.stopEvent);
+	cudaEventElapsedTime (&elapsedTime, fd.startEvent, fd.stopEvent);
+//	cudaMemcpy(uVector, device_uVector, sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize,
+//			cudaMemcpyDeviceToHost);
+
+	if (fd.operation == 5)
+	{
+//		elapsedTime = elapsedTime/(1.0*fd.inputVectorSize/256);
+		elapsedTime = elapsedTime / (1.0);
+		printf ("Elapsed-GPU-Time = %.3f\n", elapsedTime);
+		elapsedTime = elapsedTime / (1.0 * fd.inputVectorSize / (256.0));
+	}
+//				printf("Elapsed-GPU-Time = %.3f\n", elapsedTime);
+	if (fd.operation == 8)
+	{
+		elapsedTime = elapsedTime / (1.0 * fd.inputVectorSize / 65536.0); // divided by 64k
+//			elapsedTime = elapsedTime/(1.0);
+//			printf("Elapsed-GPU-Time = %.3f\n", elapsedTime);
+//			elapsedTime = elapsedTime/(1.0*fd.inputVectorSize/(131072.0));
+	}
+	if (fd.operation == 14)
+	{
+		elapsedTime = elapsedTime
+				/ (1.0 * fd.inputVectorSize / (1 << (5 * fd.paddingMethod)) * 1.0); // divided by K^e = (2^5)^e (e is passed as padding method)
+		//			elapsedTime = elapsedTime/(1.0);
+		//			printf("Elapsed-GPU-Time = %.3f\n", elapsedTime);
+		//			elapsedTime = elapsedTime/(1.0*fd.inputVectorSize/(131072.0));
+	}
+	if (fd.operation == 24)
+	{
+		elapsedTime = elapsedTime / (1.0 * fd.nIterations);
+		/// (1.0 * fd.inputVectorSize / (1 << (5 * fd.paddingMethod)) * 1.0); // divided by K^e = (2^5)^e (e is passed as padding method)
+		//			elapsedTime = elapsedTime/(1.0);
+		//			printf("Elapsed-GPU-Time = %.3f\n", elapsedTime);
+		//			elapsedTime = elapsedTime/(1.0*fd.inputVectorSize/(131072.0));
+	}
+
+	printf ("Elapsed-GPU-Time = %.3f\n", elapsedTime);
+	cudaMemcpy (xVector, device_xVector,
+							sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize,
+							cudaMemcpyDeviceToHost);
+
+	cudaMemcpy (yVector, device_yVector,
+							sizeof(usfixn64) * fd.coefficientSize * fd.inputVectorSize,
+							cudaMemcpyDeviceToHost);
+
+	if (fd.shuffle == 1)
+	{
+
+		xVector = simpleTranspose (xVector, fd.coefficientSize, fd.inputVectorSize);
+		yVector = simpleTranspose (yVector, fd.coefficientSize, fd.inputVectorSize);
+	}
+
+	printVectorToFile (xVector, fd.inputVectorSize, fd.coefficientSize,
+										 "xData_cuda");
+
+	printVectorToFile (yVector, fd.inputVectorSize, fd.coefficientSize,
+										 "yData_cuda");
+
+	cudaFree (device_xVector);
+	cudaFree (device_yVector);
+//	cudaFree(device_uVector);
+	cudaFree (device_parameters);
+	free (xVector);
+	free (yVector);
+	free (uVector);
+	return 0;
+}

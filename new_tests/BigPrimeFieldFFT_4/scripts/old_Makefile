@@ -1,0 +1,48 @@
+CURRENT_PATH = $(shell pwd)
+DATA_PATH ?= $(shell bash -c 'read -e -p "path to data files? = " path; echo $$path')
+
+SRC_DIR = working_src
+DEBUG_DIR = Debug
+GPU_ARCH = sm_30
+######################################################
+CUDA_SRC_FILES = $(wildcard $(SRC_DIR)/*.cu)
+CUDA_OBJECTS = $(CUDA_SRC_FILES:%.cu=%.cuObj)
+CUDA_EXEC = $(CUDA_SRC_FILES:%.cu=%.cuExec)
+######################################################
+SMCC = nvcc
+SMCC_FLAGS = -w -DLINUXINTEL64 -std=c++11 -I include/ -arch=$(GPU_ARCH)
+######################################################
+C_SRC_FILES = $(wildcard C_code/*.c)
+C_OBJECTS = $(C_SRC_FILES:%.c=%.cObj)
+######################################################
+CC = gcc
+CFLAGS =-I include/ -lgmp -m64
+######################################################
+
+all: $(CUDA_OBJECTS) setData runProfiler generateReport
+############################
+%.cuObj: %.cu
+	$(test ! -d $(DEBUG_DIR) && mkdir $(DEBUG_DIR))
+	$(eval current = $(subst .cuObj,,$(subst $(SRC_DIR)/,,$@))) 
+	$(SMCC) $(SMCC_FLAGS) $^ -o $(DEBUG_DIR)/$(current).bin
+############################
+%.cObj: %.c
+	$(test ! -d $(DEBUG_DIR) && mkdir $(DEBUG_DIR))
+	$(eval current = $(subst .cObj,,$(subst $(SRC_DIR)/,,$@)))
+	$(SMCC) $(SMCC_FLAGS) $^ -o $(DEBUG_DIR)/$(current)
+############################
+test: $(CUDA_EXEC)
+############################
+setData:
+	$(echo "Setting Data Set")
+	@cd $(DATA_PATH) && (for f in *.dat; do ln -sf $$(pwd)/$$f $(CURRENT_PATH)/Debug/$$f; done;)
+############################
+%.cuExec:
+	$(eval current = $(subst .cuExec,,$(subst $(SRC_DIR)/,,$@)))
+	cd $(DEBUG_DIR) && ./$(current)
+############################
+runProfiler:
+	./runProfiler.sh
+############################
+generateReport:
+	./generateReport.sh

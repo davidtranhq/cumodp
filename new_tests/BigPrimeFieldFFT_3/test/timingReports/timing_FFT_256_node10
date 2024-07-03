@@ -1,0 +1,24 @@
+operation = 5, iteration = 1, shuffled = 1, paddingMethod = 0, input = data_0_11_22_1m, vectorSize = 1048576 
+Shuffled: nBlocks = 4096, blockSize= 128 , permutationStride = 1048576 
+Elapsed-GPU-Time = 97.983932 (ms)
+=========================================================
+operation = 5, iteration = 1, shuffled = 0, paddingMethod = 0, input = data_0_11_22_1m, vectorSize = 1048576 
+Plain: BN=4096, TN=256 
+Elapsed-GPU-Time = 168.360443 (ms)
+=========================================================
+operation = 5, iteration = 1, shuffled = 1, paddingMethod = 0, input = data_1_11_22_1m, vectorSize = 1048576 
+Shuffled: nBlocks = 4096, blockSize= 128 , permutationStride = 1048576 
+Elapsed-GPU-Time = 99.873505 (ms)
+=========================================================
+operation = 5, iteration = 1, shuffled = 0, paddingMethod = 0, input = data_1_11_22_1m, vectorSize = 1048576 
+Plain: BN=4096, TN=256 
+Elapsed-GPU-Time = 168.315674 (ms)
+=========================================================
+operation = 5, iteration = 1, shuffled = 1, paddingMethod = 0, input = data_2_11_22_1m, vectorSize = 1048576 
+Shuffled: nBlocks = 4096, blockSize= 128 , permutationStride = 1048576 
+Elapsed-GPU-Time = 98.366753 (ms)
+=========================================================
+operation = 5, iteration = 1, shuffled = 0, paddingMethod = 0, input = data_2_11_22_1m, vectorSize = 1048576 
+Plain: BN=4096, TN=256 
+Elapsed-GPU-Time = 163.565887 (ms)
+=========================================================

@@ -1,0 +1,25 @@
+MODPN library: Fast Polynomial Arithmetic
+===========================================================
+Release Date: 2017.05.30
+Version: 1.0
+Authors: Marc Moreno Maza
+===========================================================
+# Maple source files for the modpn C library
+src
+
+# simple sanity checks for the modpn C library
+# through its maple interface
+tests
+
+# Used to mcompile the modpn C library
+# See README.Makefile
+Makefile
+
+===========================================================
+======================== OLD STUFF ========================
+
+# submission history
+.old/submit
+
+# files related to the build script
+.old/build

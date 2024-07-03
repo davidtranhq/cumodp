@@ -1,0 +1,68 @@
+Installation instructions of the CUMODP library
+==================================================
+
+These instructions are for UNIX and are illustrated in
+bash format. We assume that the CUMODP library was unpacked
+at the level of the user's home directory.
+==================================================
+
+0/  Make sure you have downloaded and installed the latest version of   
+    Nvidia CUDA toolkit from the following address:
+
+      https://developer.nvidia.com/cuda-toolkit
+
+    Then, you can run following command to find the version of your
+    CUDA installation:
+
+      nvcc -V
+
+    For example, if you have installed CUDA version x.y, you must be able to see the version info which ends like the following line:
+
+      "Cuda compilation tools, release x.y ..."
+
+    Please set following environmental variables:
+    
+      CUDA_PATH=/path/to/cuda-x.y/bin
+      CUDA_LIB_PATH=/path/to/cuda-x.y/lib64
+
+      export PATH=$PATH:$CUDA_PATH
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_LIB_PATH
+
+    Finally, update the bash environment:
+
+      source ~/.bashrc
+
+=======================================
+1/ Define the environment variable for the source tree of 
+   the cumodp library
+
+   export CUMODP_HOME=/path/to/cumodp/library
+
+=======================================
+2/ Define the environment variable for the source tree of 
+   the modpn sub-library
+
+    export MODPN_HOME=$HOME/cumodp/modpn/
+
+=======================================
+3/ Increment of the library load path
+
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUMODP_HOME/src
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MODPN_HOME/src
+
+=======================================
+4/ Build the cumodp library 
+
+   cd $CUMODP_HOME; make; 
+
+=======================================
+5/ Run the sanity check
+
+    cd $CUMODP_HOME;  make check
+
+=======================================
+6/ If you have the computer algebra system "Maple", you can run
+   the verification. In this case, output results are formally
+   verified against their maple counterparts.
+
+    cd $CUMODP_HOME;  make test

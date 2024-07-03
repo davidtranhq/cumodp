@@ -1,0 +1,6 @@
+GPU/code/cumodp/src/README
+==========================
+
+modpn.cu 
+-------
+Functions supporting the modpn implementation of the bivariate solver

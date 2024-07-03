@@ -1,0 +1,8 @@
+# The order in the orgin list from John is 206;
+eqs := [-768+x_1^4+3*x_2^4+5*x_1^5+4*x_1*x_2^2-3*x_1^2*x_2^3, 4*x_2^2*x_1^2-
+x_1^4+2*x_2^4+3*x_1^2*x_2+5*x_1*x_2^3+2*x_1^2*x_2^3-512];
+ineqs := [];
+nie := [];
+pie := [];
+vars := {x_1, x_2};
+params := {};

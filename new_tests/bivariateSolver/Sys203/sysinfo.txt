@@ -1,0 +1,6 @@
+n_vars:=2;
+d_poly:=2;
+n_eqs:=2;
+height:=10;
+dim:=0;
+d_ideal:=23;

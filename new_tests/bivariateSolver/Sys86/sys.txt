@@ -1,0 +1,7 @@
+# The order in the orgin list from John is 89;
+eqs := [-x_1^2+1-x_2^2, x_2^3-2*x_2+1];
+ineqs := [1];
+nie := [];
+pie := [];
+vars := {x_1, x_2};
+params := {};

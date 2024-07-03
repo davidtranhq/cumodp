@@ -1,0 +1,102 @@
+Created @ Thu Oct  6 17:23:46 EDT 2016 
+=====================
+Hostname: node10 
+=====================
+Small Prime FFT Timing on TeslaM2050 
+=====================
+N_ITERATIONS = 10 
+
+k 	 FFT Function 		  Time/N_ITERATIONS
+===================================== 
+k=4, 	 CT pre-computed:	 0.002800 (ms)
+k=4, 	 CT-not-precomputed:	 0.012934 (ms) 
+k=4, 	 StockhamFFT:    	 0.000000 (ms) 
+=====================
+k=5, 	 CT pre-computed:	 0.074330 (ms)
+k=5, 	 CT-not-precomputed:	 0.058438 (ms) 
+k=5, 	 StockhamFFT:    	 0.000000 (ms) 
+=====================
+k=6, 	 CT pre-computed:	 0.029843 (ms)
+k=6, 	 CT-not-precomputed:	 0.036733 (ms) 
+k=6, 	 StockhamFFT:    	 0.000000 (ms) 
+=====================
+k=7, 	 CT pre-computed:	 0.078867 (ms)
+k=7, 	 CT-not-precomputed:	 0.085488 (ms) 
+k=7, 	 StockhamFFT:    	 0.163549 (ms) 
+=====================
+k=8, 	 CT pre-computed:	 0.104570 (ms)
+k=8, 	 CT-not-precomputed:	 0.201562 (ms) 
+k=8, 	 StockhamFFT:    	 0.245872 (ms) 
+=====================
+k=9, 	 CT pre-computed:	 0.189370 (ms)
+k=9, 	 CT-not-precomputed:	 0.295533 (ms) 
+k=9, 	 StockhamFFT:    	 0.281670 (ms) 
+=====================
+k=10, 	 CT pre-computed:	 0.250816 (ms)
+k=10, 	 CT-not-precomputed:	 0.279027 (ms) 
+k=10, 	 StockhamFFT:    	 0.307379 (ms) 
+=====================
+k=11, 	 CT pre-computed:	 0.293677 (ms)
+k=11, 	 CT-not-precomputed:	 0.324432 (ms) 
+k=11, 	 StockhamFFT:    	 0.339872 (ms) 
+=====================
+k=12, 	 CT pre-computed:	 0.294659 (ms)
+k=12, 	 CT-not-precomputed:	 0.373562 (ms) 
+k=12, 	 StockhamFFT:    	 0.378074 (ms) 
+=====================
+k=13, 	 CT pre-computed:	 0.346803 (ms)
+k=13, 	 CT-not-precomputed:	 0.453507 (ms) 
+k=13, 	 StockhamFFT:    	 0.450701 (ms) 
+=====================
+k=14, 	 CT pre-computed:	 0.354109 (ms)
+k=14, 	 CT-not-precomputed:	 0.455450 (ms) 
+k=14, 	 StockhamFFT:    	 0.526237 (ms) 
+=====================
+k=15, 	 CT pre-computed:	 0.438915 (ms)
+k=15, 	 CT-not-precomputed:	 0.785763 (ms) 
+k=15, 	 StockhamFFT:    	 0.626835 (ms) 
+=====================
+k=16, 	 CT pre-computed:	 0.498518 (ms)
+k=16, 	 CT-not-precomputed:	 1.223414 (ms) 
+k=16, 	 StockhamFFT:    	 0.903699 (ms) 
+=====================
+k=17, 	 CT pre-computed:	 1.340550 (ms)
+k=17, 	 CT-not-precomputed:	 2.271088 (ms) 
+k=17, 	 StockhamFFT:    	 1.341382 (ms) 
+=====================
+k=18, 	 CT pre-computed:	 1.815350 (ms)
+k=18, 	 CT-not-precomputed:	 4.844278 (ms) 
+k=18, 	 StockhamFFT:    	 2.429232 (ms) 
+=====================
+k=19, 	 CT pre-computed:	 2.988995 (ms)
+k=19, 	 CT-not-precomputed:	 9.591370 (ms) 
+k=19, 	 StockhamFFT:    	 4.157245 (ms) 
+=====================
+k=20, 	 CT pre-computed:	 5.190723 (ms)
+k=20, 	 CT-not-precomputed:	 19.491789 (ms) 
+k=20, 	 StockhamFFT:    	 8.385565 (ms) 
+=====================
+k=21, 	 CT pre-computed:	 10.253059 (ms)
+k=21, 	 CT-not-precomputed:	 41.448891 (ms) 
+k=21, 	 StockhamFFT:    	 13.731667 (ms) 
+=====================
+k=22, 	 CT pre-computed:	 19.747437 (ms)
+k=22, 	 CT-not-precomputed:	 87.608696 (ms) 
+k=22, 	 StockhamFFT:    	 31.570385 (ms) 
+=====================
+k=23, 	 CT pre-computed:	 41.241531 (ms)
+k=23, 	 CT-not-precomputed:	 188.618805 (ms) 
+k=23, 	 StockhamFFT:    	 62.659534 (ms) 
+=====================
+k=24, 	 CT pre-computed:	 82.437149 (ms)
+k=24, 	 CT-not-precomputed:	 401.337921 (ms) 
+k=24, 	 StockhamFFT:    	 122.471863 (ms) 
+=====================
+k=25, 	 CT pre-computed:	 175.717102 (ms)
+k=25, 	 CT-not-precomputed:	 863.293152 (ms) 
+k=25, 	 StockhamFFT:    	 255.667999 (ms) 
+=====================
+k=26, 	 CT pre-computed:	 354.704987 (ms)
+k=26, 	 CT-not-precomputed:	 1833.906860 (ms) 
+k=26, 	 StockhamFFT:    	 517.844604 (ms) 
+=====================

@@ -1,0 +1,442 @@
+==3503== NVPROF is profiling process 3503, command: ./FFTBlock.bin
+==3503== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3503== Profiling application: ./FFTBlock.bin
+==3503== Profiling result:
+==3503== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: FFT(unsigned long, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.187482    0.187482    0.187482
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.694924    0.694924    0.694924
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.022502    0.022502    0.022502
+          1                      dram_read_throughput             Device Memory Read Throughput  158.03MB/s  158.03MB/s  158.03MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  3.0370GB/s  3.0370GB/s  3.0370GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.07%      12.07%      12.07%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3511== NVPROF is profiling process 3511, command: ./FFT_1048576.bin
+==3511== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3511== Profiling application: ./FFT_1048576.bin
+==3511== Profiling result:
+==3511== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: data_fft16_kernel(unsigned long*)
+          5                        achieved_occupancy                        Achieved Occupancy    0.124999    0.124999    0.124999
+          5                    shared_replay_overhead             Shared Memory Replay Overhead    1.009471    1.081315    1.059524
+          5                     local_replay_overhead        Local Memory Cache Replay Overhead    0.004021    0.004213    0.004147
+          5                      dram_read_throughput             Device Memory Read Throughput  372.96MB/s  479.63MB/s  411.40MB/s
+          5                     dram_write_throughput            Device Memory Write Throughput  2.4545GB/s  3.1644GB/s  2.7069GB/s
+          5                         shared_efficiency                  Shared Memory Efficiency       9.39%       9.49%       9.42%
+          5                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+	Kernel: uniTwiddle(unsigned long*, unsigned long*, short, short, short, short)
+          4                        achieved_occupancy                        Achieved Occupancy    0.249996    0.249996    0.249996
+          4                    shared_replay_overhead             Shared Memory Replay Overhead    0.008271    0.009683    0.009225
+          4                     local_replay_overhead        Local Memory Cache Replay Overhead    0.014901    0.026292    0.022441
+          4                      dram_read_throughput             Device Memory Read Throughput  1.7184GB/s  3.1105GB/s  2.6842GB/s
+          4                     dram_write_throughput            Device Memory Write Throughput  4.9156GB/s  6.4504GB/s  5.4130GB/s
+          4                         shared_efficiency                  Shared Memory Efficiency      17.59%      20.10%      19.38%
+          4                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+	Kernel: uniTranspose(unsigned long*, unsigned long*, int, short, short, short)
+         12                        achieved_occupancy                        Achieved Occupancy    0.249893    0.249963    0.249914
+         12                    shared_replay_overhead             Shared Memory Replay Overhead    0.165680    0.165680    0.165680
+         12                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+         12                      dram_read_throughput             Device Memory Read Throughput  2.2083GB/s  8.9420GB/s  5.5101GB/s
+         12                     dram_write_throughput            Device Memory Write Throughput  8.5242GB/s  21.330GB/s  15.452GB/s
+         12                         shared_efficiency                  Shared Memory Efficiency      25.00%      25.00%      25.00%
+         12                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (2)     Low (1)
+#########################################################################################################################################
+==3527== NVPROF is profiling process 3527, command: ./FFT_16.bin
+==3527== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3527== Profiling application: ./FFT_16.bin
+==3527== Profiling result:
+==3527== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: FFT(unsigned long, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.015625    0.015625    0.015625
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  370.44MB/s  370.44MB/s  370.44MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  113.07MB/s  113.07MB/s  113.07MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+======== Error: Application returned non-zero code 1
+#########################################################################################################################################
+==3548== NVPROF is profiling process 3548, command: ./FFT_256.bin
+==3548== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3548== Profiling application: ./FFT_256.bin
+==3548== Profiling result:
+==3548== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: FFT256(unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124992    0.124992    0.124992
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.182731    0.182731    0.182731
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.009407    0.009407    0.009407
+          1                      dram_read_throughput             Device Memory Read Throughput  537.52MB/s  537.52MB/s  537.52MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  652.24MB/s  652.24MB/s  652.24MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       9.86%       9.86%       9.86%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3556== NVPROF is profiling process 3556, command: ./FFT_4096.bin
+==3556== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3556== Profiling application: ./FFT_4096.bin
+==3556== Profiling result:
+==3556== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: data_fft16_kernel(unsigned long*)
+          3                        achieved_occupancy                        Achieved Occupancy    0.124769    0.124775    0.124772
+          3                    shared_replay_overhead             Shared Memory Replay Overhead    0.672083    0.731293    0.700167
+          3                     local_replay_overhead        Local Memory Cache Replay Overhead    0.002676    0.002849    0.002748
+          3                      dram_read_throughput             Device Memory Read Throughput  519.99MB/s  537.57MB/s  529.60MB/s
+          3                     dram_write_throughput            Device Memory Write Throughput  2.3966GB/s  2.4742GB/s  2.4349GB/s
+          3                         shared_efficiency                  Shared Memory Efficiency       9.38%       9.48%       9.42%
+          3                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+	Kernel: uniTwiddle(unsigned long*, unsigned long*, short, short, short, short)
+          2                        achieved_occupancy                        Achieved Occupancy    0.249094    0.249161    0.249128
+          2                    shared_replay_overhead             Shared Memory Replay Overhead    0.007882    0.008813    0.008347
+          2                     local_replay_overhead        Local Memory Cache Replay Overhead    0.013865    0.021039    0.017452
+          2                      dram_read_throughput             Device Memory Read Throughput  2.0412GB/s  3.6155GB/s  2.8284GB/s
+          2                     dram_write_throughput            Device Memory Write Throughput  5.9953GB/s  7.4693GB/s  6.7323GB/s
+          2                         shared_efficiency                  Shared Memory Efficiency      17.59%      20.10%      18.85%
+          2                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+	Kernel: uniTranspose(unsigned long*, unsigned long*, int, short, short, short)
+          6                        achieved_occupancy                        Achieved Occupancy    0.240560    0.241710    0.240812
+          6                    shared_replay_overhead             Shared Memory Replay Overhead    0.037584    0.037584    0.037584
+          6                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          6                      dram_read_throughput             Device Memory Read Throughput  2.5555GB/s  2.8193GB/s  2.7699GB/s
+          6                     dram_write_throughput            Device Memory Write Throughput  7.2555GB/s  9.8517GB/s  7.7466GB/s
+          6                         shared_efficiency                  Shared Memory Efficiency      24.92%      25.00%      24.98%
+          6                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3564== NVPROF is profiling process 3564, command: ./FFT_65536.bin
+==3564== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3564== Profiling application: ./FFT_65536.bin
+==3564== Profiling result:
+==3564== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: uniCopy(unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.994379    0.994379    0.994379
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  19.434GB/s  19.434GB/s  19.434GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  19.442GB/s  19.442GB/s  19.442GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+	Kernel: data_fft16_kernel(unsigned long*)
+          4                        achieved_occupancy                        Achieved Occupancy    0.124985    0.124985    0.124985
+          4                    shared_replay_overhead             Shared Memory Replay Overhead    0.772970    0.849527    0.819039
+          4                     local_replay_overhead        Local Memory Cache Replay Overhead    0.003079    0.003311    0.003210
+          4                      dram_read_throughput             Device Memory Read Throughput  351.25MB/s  531.11MB/s  453.58MB/s
+          4                     dram_write_throughput            Device Memory Write Throughput  1.7744GB/s  2.6862GB/s  2.2844GB/s
+          4                         shared_efficiency                  Shared Memory Efficiency       9.39%       9.49%       9.42%
+          4                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+	Kernel: uniTwiddle(unsigned long*, unsigned long*, short, short, short, short)
+          3                        achieved_occupancy                        Achieved Occupancy    0.249931    0.249945    0.249936
+          3                    shared_replay_overhead             Shared Memory Replay Overhead    0.008261    0.009641    0.009058
+          3                     local_replay_overhead        Local Memory Cache Replay Overhead    0.014532    0.025828    0.020838
+          3                      dram_read_throughput             Device Memory Read Throughput  1.4864GB/s  3.8907GB/s  2.6753GB/s
+          3                     dram_write_throughput            Device Memory Write Throughput  4.5432GB/s  8.0363GB/s  5.9356GB/s
+          3                         shared_efficiency                  Shared Memory Efficiency      17.59%      20.10%      19.20%
+          3                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+	Kernel: uniTranspose(unsigned long*, unsigned long*, int, short, short, short)
+          9                        achieved_occupancy                        Achieved Occupancy    0.248682    0.249412    0.248839
+          9                    shared_replay_overhead             Shared Memory Replay Overhead    0.329412    0.329412    0.329412
+          9                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          9                      dram_read_throughput             Device Memory Read Throughput  2.5312GB/s  7.5731GB/s  5.6146GB/s
+          9                     dram_write_throughput            Device Memory Write Throughput  10.024GB/s  20.839GB/s  17.075GB/s
+          9                         shared_efficiency                  Shared Memory Efficiency      24.86%      25.00%      24.97%
+          9                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (2)     Low (1)
+#########################################################################################################################################
+==3573== NVPROF is profiling process 3573, command: ./addition.bin
+==3573== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3573== Profiling application: ./addition.bin
+==3573== Profiling result:
+==3573== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: bigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.015625    0.015625    0.015625
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  13.669MB/s  13.669MB/s  13.669MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  30.756MB/s  30.756MB/s  30.756MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3581== NVPROF is profiling process 3581, command: ./batchSubtraction.bin
+==3581== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3581== Profiling application: ./batchSubtraction.bin
+==3581== Profiling result:
+==3581== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigSub(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.015623    0.015623    0.015623
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  0.00000B/s  0.00000B/s  0.00000B/s
+          1                     dram_write_throughput            Device Memory Write Throughput  341.89MB/s  341.89MB/s  341.89MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3589== NVPROF is profiling process 3589, command: ./bigAdditionWithSM.bin
+==3589== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3589== Profiling application: ./bigAdditionWithSM.bin
+==3589== Profiling result:
+==3589== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124937    0.124937    0.124937
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.360980    0.360980    0.360980
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  239.36MB/s  239.36MB/s  239.36MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  448.56MB/s  448.56MB/s  448.56MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.50%      12.50%      12.50%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+#########################################################################################################################################
+==3597== NVPROF is profiling process 3597, command: ./bigAdditionWithoutSM.bin
+==3597== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3597== Profiling application: ./bigAdditionWithoutSM.bin
+==3597== Profiling result:
+==3597== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.986474    0.986474    0.986474
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  26.084GB/s  26.084GB/s  26.084GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  13.052GB/s  13.052GB/s  13.052GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3607== NVPROF is profiling process 3607, command: ./bigMultiplicationWithSM.bin
+==3607== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3607== Profiling application: ./bigMultiplicationWithSM.bin
+==3607== Profiling result:
+==3607== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124999    0.124999    0.124999
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000759    0.000759    0.000759
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.139253    0.139253    0.139253
+          1                      dram_read_throughput             Device Memory Read Throughput  12.629GB/s  12.629GB/s  12.629GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  2.9053GB/s  2.9053GB/s  2.9053GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.50%      12.50%      12.50%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3627== NVPROF is profiling process 3627, command: ./bigMultiplicationWithSM2.bin
+==3627== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3627== Profiling application: ./bigMultiplicationWithSM2.bin
+==3627== Profiling result:
+==3627== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124999    0.124999    0.124999
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.029840    0.029840    0.029840
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.050348    0.050348    0.050348
+          1                      dram_read_throughput             Device Memory Read Throughput  790.40MB/s  790.40MB/s  790.40MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  3.8317GB/s  3.8317GB/s  3.8317GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.50%      12.50%      12.50%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3638== NVPROF is profiling process 3638, command: ./bigMultiplicationWithSM3.bin
+==3638== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3638== Profiling application: ./bigMultiplicationWithSM3.bin
+==3638== Profiling result:
+==3638== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124995    0.124995    0.124995
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.001982    0.001982    0.001982
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.091765    0.091765    0.091765
+          1                      dram_read_throughput             Device Memory Read Throughput  73.450MB/s  73.450MB/s  73.450MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  9.6845GB/s  9.6845GB/s  9.6845GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.50%      12.50%      12.50%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3646== NVPROF is profiling process 3646, command: ./bigMultiplicationWithoutSM.bin
+==3646== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3646== Profiling application: ./bigMultiplicationWithoutSM.bin
+==3646== Profiling result:
+==3646== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.495194    0.495194    0.495194
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.085009    0.085009    0.085009
+          1                      dram_read_throughput             Device Memory Read Throughput  17.882GB/s  17.882GB/s  17.882GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  17.928GB/s  17.928GB/s  17.928GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3655== NVPROF is profiling process 3655, command: ./commonAddition1.bin
+==3655== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3655== Profiling application: ./commonAddition1.bin
+==3655== Profiling result:
+==3655== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.934938    0.934938    0.934938
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  26.620GB/s  26.620GB/s  26.620GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  13.318GB/s  13.318GB/s  13.318GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3663== NVPROF is profiling process 3663, command: ./commonAddition2.bin
+==3663== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3663== Profiling application: ./commonAddition2.bin
+==3663== Profiling result:
+==3663== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124749    0.124749    0.124749
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.514641    0.514641    0.514641
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  255.87MB/s  255.87MB/s  255.87MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  470.76MB/s  470.76MB/s  470.76MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.75%      12.75%      12.75%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+#########################################################################################################################################
+==3674== NVPROF is profiling process 3674, command: ./normalAdditionWithSM.bin
+==3674== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3674== Profiling application: ./normalAdditionWithSM.bin
+==3674== Profiling result:
+==3674== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalAdd(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.248362    0.248362    0.248362
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.286762    0.286762    0.286762
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  508.78MB/s  508.78MB/s  508.78MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  1.8904GB/s  1.8904GB/s  1.8904GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.79%      12.79%      12.79%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Mid (4)     Mid (4)     Mid (4)
+#########################################################################################################################################
+==3697== NVPROF is profiling process 3697, command: ./normalAdditionWithoutSM.bin
+==3697== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3697== Profiling application: ./normalAdditionWithoutSM.bin
+==3697== Profiling result:
+==3697== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalAdd(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.977435    0.977435    0.977435
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  32.662GB/s  32.662GB/s  32.662GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  16.463GB/s  16.463GB/s  16.463GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3706== NVPROF is profiling process 3706, command: ./normalDoubleMultiplicationWithSM.bin
+==3706== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3706== Profiling application: ./normalDoubleMultiplicationWithSM.bin
+==3706== Profiling result:
+==3706== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124809    0.124809    0.124809
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.495575    0.495575    0.495575
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  3.5715GB/s  3.5715GB/s  3.5715GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  13.476GB/s  13.476GB/s  13.476GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      25.00%      25.00%      25.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+#########################################################################################################################################
+==3715== NVPROF is profiling process 3715, command: ./normalDoubleMultiplicationWithoutSM.bin
+==3715== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3715== Profiling application: ./normalDoubleMultiplicationWithoutSM.bin
+==3715== Profiling result:
+==3715== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.994020    0.994020    0.994020
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  26.568GB/s  26.568GB/s  26.568GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  13.282GB/s  13.282GB/s  13.282GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3724== NVPROF is profiling process 3724, command: ./normalMontMultiplicationWithSM.bin
+==3724== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3724== Profiling application: ./normalMontMultiplicationWithSM.bin
+==3724== Profiling result:
+==3724== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124899    0.124899    0.124899
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.263323    0.263323    0.263323
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  3.8836GB/s  3.8836GB/s  3.8836GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  14.270GB/s  14.270GB/s  14.270GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      25.00%      25.00%      25.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+#########################################################################################################################################
+==3732== NVPROF is profiling process 3732, command: ./normalMontMultiplicationWithoutSM.bin
+==3732== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3732== Profiling application: ./normalMontMultiplicationWithoutSM.bin
+==3732== Profiling result:
+==3732== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.988406    0.988406    0.988406
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  26.504GB/s  26.504GB/s  26.504GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  13.257GB/s  13.257GB/s  13.257GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3740== NVPROF is profiling process 3740, command: ./subtraction.bin
+==3740== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3740== Profiling application: ./subtraction.bin
+==3740== Profiling result:
+==3740== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: bigSub(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.015625    0.015625    0.015625
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  0.00000B/s  0.00000B/s  0.00000B/s
+          1                     dram_write_throughput            Device Memory Write Throughput  42.105MB/s  42.105MB/s  42.105MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==3748== NVPROF is profiling process 3748, command: ./unsignedMultiplicationWithSM.bin
+==3748== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==3748== Profiling application: ./unsignedMultiplicationWithSM.bin
+==3748== Profiling result:
+==3748== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: unsignedMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.249128    0.249128    0.249128
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.179502    0.179502    0.179502
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  109.99MB/s  109.99MB/s  109.99MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  639.91MB/s  639.91MB/s  639.91MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      50.33%      50.33%      50.33%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################

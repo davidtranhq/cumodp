@@ -1,0 +1,1087 @@
+==31929== NVPROF is profiling process 31929, command: ./addition.bin
+==31929== Profiling application: ./addition.bin
+==31929== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 69.60%  13.408us         1  13.408us  13.408us  13.408us  bigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+ 16.45%  3.1680us         3  1.0560us     928ns  1.2800us  [CUDA memcpy HtoD]
+ 13.95%  2.6880us         1  2.6880us  2.6880us  2.6880us  [CUDA memcpy DtoH]
+
+==31929== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.21%  47.815ms         3  15.938ms  5.4470us  47.803ms  cudaMalloc
+  0.48%  230.34us        83  2.7750us     143ns  99.041us  cuDeviceGetAttribute
+  0.08%  40.724us         1  40.724us  40.724us  40.724us  cuDeviceTotalMem
+  0.08%  37.645us         4  9.4110us  3.5310us  16.096us  cudaMemcpy
+  0.05%  23.866us         1  23.866us  23.866us  23.866us  cudaLaunch
+  0.05%  23.405us         1  23.405us  23.405us  23.405us  cuDeviceGetName
+  0.04%  17.818us         1  17.818us  17.818us  17.818us  cudaDeviceSynchronize
+  0.01%  3.8430us         4     960ns     159ns  3.1890us  cudaSetupArgument
+  0.00%  1.1970us         2     598ns     187ns  1.0100us  cuDeviceGet
+  0.00%     858ns         2     429ns     247ns     611ns  cuDeviceGetCount
+  0.00%     625ns         1     625ns     625ns     625ns  cudaConfigureCall
+  0.00%     240ns         1     240ns     240ns     240ns  cudaGetLastError
+#########################################################################################################################################
+==31937== NVPROF is profiling process 31937, command: ./addition.bin
+==31937== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==31937== Profiling application: ./addition.bin
+==31937== Profiling result:
+==31937== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: bigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm       25172       25172       25172
+
+==31937== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: bigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.015622    0.015622    0.015622
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  27.142MB/s  27.142MB/s  27.142MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  22.207MB/s  22.207MB/s  22.207MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==31945== NVPROF is profiling process 31945, command: ./batchSubtraction.bin
+==31945== Profiling application: ./batchSubtraction.bin
+==31945== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 74.40%  19.809us         1  19.809us  19.809us  19.809us  batchBigSub(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+ 14.66%  3.9040us         3  1.3010us  1.2480us  1.4080us  [CUDA memcpy HtoD]
+ 10.94%  2.9120us         1  2.9120us  2.9120us  2.9120us  [CUDA memcpy DtoH]
+
+==31945== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.16%  39.286ms         3  13.095ms  3.6840us  39.277ms  cudaMalloc
+  0.50%  197.27us        83  2.3760us     142ns  85.252us  cuDeviceGetAttribute
+  0.10%  38.136us         4  9.5340us  3.2680us  16.742us  cudaMemcpy
+  0.06%  24.737us         1  24.737us  24.737us  24.737us  cudaLaunch
+  0.06%  24.702us         1  24.702us  24.702us  24.702us  cudaDeviceSynchronize
+  0.06%  23.951us         1  23.951us  23.951us  23.951us  cuDeviceTotalMem
+  0.05%  18.466us         1  18.466us  18.466us  18.466us  cuDeviceGetName
+  0.01%  3.7860us         4     946ns     159ns  3.1120us  cudaSetupArgument
+  0.00%  1.2990us         2     649ns     175ns  1.1240us  cuDeviceGet
+  0.00%     816ns         2     408ns     212ns     604ns  cuDeviceGetCount
+  0.00%     625ns         1     625ns     625ns     625ns  cudaConfigureCall
+  0.00%     253ns         1     253ns     253ns     253ns  cudaGetLastError
+#########################################################################################################################################
+==31954== NVPROF is profiling process 31954, command: ./batchSubtraction.bin
+==31954== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==31954== Profiling application: ./batchSubtraction.bin
+==31954== Profiling result:
+==31954== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigSub(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm       36848       36848       36848
+
+==31954== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigSub(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.015625    0.015625    0.015625
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  82.376MB/s  82.376MB/s  82.376MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  228.12MB/s  228.12MB/s  228.12MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==31962== NVPROF is profiling process 31962, command: ./bigAdditionWithSM.bin
+==31962== Profiling application: ./bigAdditionWithSM.bin
+==31962== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 95.62%  30.660ms         1  30.660ms  30.660ms  30.660ms  batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  3.29%  1.0538ms         3  351.27us  335.59us  366.66us  [CUDA memcpy HtoD]
+  1.09%  349.70us         1  349.70us  349.70us  349.70us  [CUDA memcpy DtoH]
+
+==31962== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 57.54%  45.248ms         2  22.624ms     925ns  45.247ms  cudaEventCreate
+ 39.18%  30.807ms         1  30.807ms  30.807ms  30.807ms  cudaDeviceSynchronize
+  2.37%  1.8616ms         4  465.40us  347.60us  659.16us  cudaMemcpy
+  0.32%  248.56us         3  82.854us  79.823us  86.872us  cudaMalloc
+  0.24%  186.76us        83  2.2500us     142ns  75.230us  cuDeviceGetAttribute
+  0.23%  183.81us         3  61.269us  43.796us  93.040us  cudaFree
+  0.03%  25.871us         1  25.871us  25.871us  25.871us  cudaLaunch
+  0.03%  23.873us         1  23.873us  23.873us  23.873us  cuDeviceTotalMem
+  0.02%  18.441us         1  18.441us  18.441us  18.441us  cuDeviceGetName
+  0.01%  8.9650us         1  8.9650us  8.9650us  8.9650us  cudaEventSynchronize
+  0.01%  8.7480us         2  4.3740us  4.2270us  4.5210us  cudaEventRecord
+  0.01%  4.3120us         4  1.0780us     158ns  3.6300us  cudaSetupArgument
+  0.00%  3.2220us         1  3.2220us  3.2220us  3.2220us  cudaEventElapsedTime
+  0.00%  1.2490us         2     624ns     165ns  1.0840us  cuDeviceGet
+  0.00%     817ns         2     408ns     231ns     586ns  cuDeviceGetCount
+  0.00%     790ns         1     790ns     790ns     790ns  cudaConfigureCall
+  0.00%     243ns         1     243ns     243ns     243ns  cudaGetLastError
+#########################################################################################################################################
+==31970== NVPROF is profiling process 31970, command: ./bigAdditionWithSM.bin
+==31970== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==31970== Profiling application: ./bigAdditionWithSM.bin
+==31970== Profiling result:
+==31970== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm    49666084    49666084    49666084
+
+==31970== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124923    0.124923    0.124923
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.360980    0.360980    0.360980
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  136.99MB/s  136.99MB/s  136.99MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  215.72MB/s  215.72MB/s  215.72MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.50%      12.50%      12.50%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+#########################################################################################################################################
+==32000== NVPROF is profiling process 32000, command: ./bigAdditionWithSM_padding1.bin
+==32000== Profiling application: ./bigAdditionWithSM_padding1.bin
+==32000== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 94.88%  26.055ms         1  26.055ms  26.055ms  26.055ms  batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  3.87%  1.0635ms         3  354.51us  334.18us  365.51us  [CUDA memcpy HtoD]
+  1.25%  343.72us         1  343.72us  343.72us  343.72us  [CUDA memcpy DtoH]
+
+==32000== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 57.90%  39.838ms         2  19.919ms     974ns  39.837ms  cudaEventCreate
+ 38.10%  26.212ms         1  26.212ms  26.212ms  26.212ms  cudaDeviceSynchronize
+  2.85%  1.9602ms         4  490.05us  361.21us  742.98us  cudaMemcpy
+  0.37%  253.72us        83  3.0560us     281ns  104.62us  cuDeviceGetAttribute
+  0.37%  251.52us         3  83.838us  81.062us  87.008us  cudaMalloc
+  0.25%  173.11us         3  57.702us  43.135us  84.735us  cudaFree
+  0.05%  33.396us         1  33.396us  33.396us  33.396us  cuDeviceTotalMem
+  0.04%  26.958us         1  26.958us  26.958us  26.958us  cuDeviceGetName
+  0.04%  25.752us         1  25.752us  25.752us  25.752us  cudaLaunch
+  0.01%  7.4320us         2  3.7160us  3.4300us  4.0020us  cudaEventRecord
+  0.01%  6.8180us         1  6.8180us  6.8180us  6.8180us  cudaEventSynchronize
+  0.01%  4.0440us         4  1.0110us     163ns  3.3590us  cudaSetupArgument
+  0.00%  3.0590us         1  3.0590us  3.0590us  3.0590us  cudaEventElapsedTime
+  0.00%  2.1450us         2  1.0720us     345ns  1.8000us  cuDeviceGet
+  0.00%  1.5560us         2     778ns     414ns  1.1420us  cuDeviceGetCount
+  0.00%     718ns         1     718ns     718ns     718ns  cudaConfigureCall
+  0.00%     224ns         1     224ns     224ns     224ns  cudaGetLastError
+#########################################################################################################################################
+==32008== NVPROF is profiling process 32008, command: ./bigAdditionWithSM_padding1.bin
+==32008== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32008== Profiling application: ./bigAdditionWithSM_padding1.bin
+==32008== Profiling result:
+==32008== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm    42200884    42200884    42200884
+
+==32008== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.092963    0.092963    0.092963
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.045111    0.045111    0.045111
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  161.63MB/s  161.63MB/s  161.63MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  269.06MB/s  269.06MB/s  269.06MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      53.33%      53.33%      53.33%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32016== NVPROF is profiling process 32016, command: ./bigAdditionWithSM_padding2.bin
+==32016== Profiling application: ./bigAdditionWithSM_padding2.bin
+==32016== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 96.45%  39.068ms         1  39.068ms  39.068ms  39.068ms  batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  2.71%  1.0974ms         3  365.79us  359.33us  372.17us  [CUDA memcpy HtoD]
+  0.84%  340.81us         1  340.81us  340.81us  340.81us  [CUDA memcpy DtoH]
+
+==32016== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 47.80%  41.639ms         2  20.819ms     820ns  41.638ms  cudaEventCreate
+ 45.00%  39.192ms         1  39.192ms  39.192ms  39.192ms  cudaDeviceSynchronize
+  3.88%  3.3768ms         1  3.3768ms  3.3768ms  3.3768ms  cudaEventSynchronize
+  2.44%  2.1274ms         4  531.85us  372.53us  871.85us  cudaMemcpy
+  0.29%  256.13us         3  85.375us  78.394us  91.070us  cudaMalloc
+  0.23%  196.86us         3  65.618us  43.795us  106.05us  cudaFree
+  0.21%  184.45us        83  2.2220us     144ns  73.920us  cuDeviceGetAttribute
+  0.06%  56.168us         1  56.168us  56.168us  56.168us  cudaLaunch
+  0.03%  28.166us         1  28.166us  28.166us  28.166us  cuDeviceGetName
+  0.03%  23.737us         1  23.737us  23.737us  23.737us  cuDeviceTotalMem
+  0.01%  7.4710us         2  3.7350us  3.4010us  4.0700us  cudaEventRecord
+  0.01%  6.1930us         4  1.5480us     253ns  5.1500us  cudaSetupArgument
+  0.00%  4.0570us         1  4.0570us  4.0570us  4.0570us  cudaEventElapsedTime
+  0.00%  1.2660us         2     633ns     180ns  1.0860us  cuDeviceGet
+  0.00%  1.0920us         2     546ns     227ns     865ns  cuDeviceGetCount
+  0.00%     859ns         1     859ns     859ns     859ns  cudaConfigureCall
+  0.00%     438ns         1     438ns     438ns     438ns  cudaGetLastError
+#########################################################################################################################################
+==32024== NVPROF is profiling process 32024, command: ./bigAdditionWithSM_padding2.bin
+==32024== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32024== Profiling application: ./bigAdditionWithSM_padding2.bin
+==32024== Profiling result:
+==32024== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm    63283200    63283200    63283200
+
+==32024== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.062111    0.062111    0.062111
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.048346    0.048346    0.048346
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  107.35MB/s  107.35MB/s  107.35MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  207.88MB/s  207.88MB/s  207.88MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      51.61%      51.61%      51.61%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32032== NVPROF is profiling process 32032, command: ./bigAdditionWithoutSM.bin
+==32032== Profiling application: ./bigAdditionWithoutSM.bin
+==32032== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 98.88%  124.40ms         1  124.40ms  124.40ms  124.40ms  batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  0.84%  1.0571ms         3  352.38us  336.90us  372.74us  [CUDA memcpy HtoD]
+  0.28%  348.04us         1  348.04us  348.04us  348.04us  [CUDA memcpy DtoH]
+
+==32032== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 72.78%  124.55ms         1  124.55ms  124.55ms  124.55ms  cudaDeviceSynchronize
+ 25.66%  43.909ms         2  21.955ms     842ns  43.908ms  cudaEventCreate
+  1.06%  1.8057ms         4  451.42us  333.67us  595.27us  cudaMemcpy
+  0.18%  314.28us        83  3.7860us     375ns  128.61us  cuDeviceGetAttribute
+  0.15%  254.28us         3  84.758us  84.188us  85.408us  cudaMalloc
+  0.10%  177.23us         3  59.078us  43.837us  87.332us  cudaFree
+  0.02%  42.727us         1  42.727us  42.727us  42.727us  cuDeviceTotalMem
+  0.02%  34.324us         1  34.324us  34.324us  34.324us  cuDeviceGetName
+  0.02%  26.428us         1  26.428us  26.428us  26.428us  cudaLaunch
+  0.00%  7.8170us         2  3.9080us  3.5500us  4.2670us  cudaEventRecord
+  0.00%  6.7800us         1  6.7800us  6.7800us  6.7800us  cudaEventSynchronize
+  0.00%  3.9200us         4     980ns     168ns  3.2050us  cudaSetupArgument
+  0.00%  3.1270us         2  1.5630us     527ns  2.6000us  cuDeviceGet
+  0.00%  2.9270us         1  2.9270us  2.9270us  2.9270us  cudaEventElapsedTime
+  0.00%  2.1870us         2  1.0930us     543ns  1.6440us  cuDeviceGetCount
+  0.00%     812ns         1     812ns     812ns     812ns  cudaConfigureCall
+  0.00%     338ns         1     338ns     338ns     338ns  cudaGetLastError
+#########################################################################################################################################
+==32040== NVPROF is profiling process 32040, command: ./bigAdditionWithoutSM.bin
+==32040== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32040== Profiling application: ./bigAdditionWithoutSM.bin
+==32040== Profiling result:
+==32040== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm   201407332   201407332   201407332
+
+==32040== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.491176    0.491176    0.491176
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  13.423GB/s  13.423GB/s  13.423GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  6.7349GB/s  6.7349GB/s  6.7349GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32068== NVPROF is profiling process 32068, command: ./bigMultiplicationWithSM2.bin
+==32068== Profiling application: ./bigMultiplicationWithSM2.bin
+==32068== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.82%  792.76ms         1  792.76ms  792.76ms  792.76ms  batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  0.13%  1.0499ms         3  349.98us  334.08us  367.91us  [CUDA memcpy HtoD]
+  0.05%  360.00us         1  360.00us  360.00us  360.00us  [CUDA memcpy DtoH]
+
+==32068== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 94.96%  792.93ms         1  792.93ms  792.93ms  792.93ms  cudaDeviceSynchronize
+  4.71%  39.319ms         2  19.660ms     874ns  39.319ms  cudaEventCreate
+  0.24%  2.0061ms         4  501.52us  364.73us  845.59us  cudaMemcpy
+  0.03%  255.36us         3  85.119us  81.127us  87.656us  cudaMalloc
+  0.02%  190.99us         3  63.663us  44.743us  99.253us  cudaFree
+  0.02%  179.21us        83  2.1590us     156ns  75.348us  cuDeviceGetAttribute
+  0.00%  24.487us         1  24.487us  24.487us  24.487us  cudaLaunch
+  0.00%  24.016us         1  24.016us  24.016us  24.016us  cuDeviceTotalMem
+  0.00%  18.607us         1  18.607us  18.607us  18.607us  cuDeviceGetName
+  0.00%  7.9510us         2  3.9750us  3.9230us  4.0280us  cudaEventRecord
+  0.00%  6.6480us         1  6.6480us  6.6480us  6.6480us  cudaEventSynchronize
+  0.00%  4.4170us         4  1.1040us     157ns  3.6750us  cudaSetupArgument
+  0.00%  2.6910us         1  2.6910us  2.6910us  2.6910us  cudaEventElapsedTime
+  0.00%  1.2620us         2     631ns     175ns  1.0870us  cuDeviceGet
+  0.00%     920ns         2     460ns     240ns     680ns  cuDeviceGetCount
+  0.00%     767ns         1     767ns     767ns     767ns  cudaConfigureCall
+  0.00%     218ns         1     218ns     218ns     218ns  cudaGetLastError
+#########################################################################################################################################
+==32076== NVPROF is profiling process 32076, command: ./bigMultiplicationWithSM2.bin
+==32076== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32076== Profiling application: ./bigMultiplicationWithSM2.bin
+==32076== Profiling result:
+==32076== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm  1281543628  1281543628  1281543628
+
+==32076== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124998    0.124998    0.124998
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.029840    0.029840    0.029840
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.050454    0.050454    0.050454
+          1                      dram_read_throughput             Device Memory Read Throughput  429.32MB/s  429.32MB/s  429.32MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  2.0938GB/s  2.0938GB/s  2.0938GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.50%      12.50%      12.50%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32084== NVPROF is profiling process 32084, command: ./bigMultiplicationWithSM3.bin
+==32084== Profiling application: ./bigMultiplicationWithSM3.bin
+==32084== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 98.64%  101.34ms         1  101.34ms  101.34ms  101.34ms  batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  1.02%  1.0516ms         3  350.53us  334.31us  359.33us  [CUDA memcpy HtoD]
+  0.34%  344.32us         1  344.32us  344.32us  344.32us  [CUDA memcpy DtoH]
+
+==32084== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 70.92%  101.49ms         1  101.49ms  101.49ms  101.49ms  cudaDeviceSynchronize
+ 27.24%  38.977ms         2  19.489ms     967ns  38.976ms  cudaEventCreate
+  1.35%  1.9259ms         4  481.48us  361.57us  729.88us  cudaMemcpy
+  0.18%  257.87us         3  85.957us  79.530us  90.903us  cudaMalloc
+  0.12%  177.25us        83  2.1350us     141ns  74.902us  cuDeviceGetAttribute
+  0.12%  172.64us         3  57.548us  44.502us  82.279us  cudaFree
+  0.02%  33.578us         1  33.578us  33.578us  33.578us  cuDeviceTotalMem
+  0.02%  25.180us         1  25.180us  25.180us  25.180us  cudaLaunch
+  0.01%  18.805us         1  18.805us  18.805us  18.805us  cuDeviceGetName
+  0.01%  7.9310us         2  3.9650us  3.4530us  4.4780us  cudaEventRecord
+  0.00%  6.9730us         1  6.9730us  6.9730us  6.9730us  cudaEventSynchronize
+  0.00%  4.4900us         4  1.1220us     153ns  3.8230us  cudaSetupArgument
+  0.00%  2.8030us         1  2.8030us  2.8030us  2.8030us  cudaEventElapsedTime
+  0.00%  1.2120us         2     606ns     188ns  1.0240us  cuDeviceGet
+  0.00%     857ns         1     857ns     857ns     857ns  cudaConfigureCall
+  0.00%     843ns         2     421ns     217ns     626ns  cuDeviceGetCount
+  0.00%     244ns         1     244ns     244ns     244ns  cudaGetLastError
+#########################################################################################################################################
+==32092== NVPROF is profiling process 32092, command: ./bigMultiplicationWithSM3.bin
+==32092== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32092== Profiling application: ./bigMultiplicationWithSM3.bin
+==32092== Profiling result:
+==32092== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm   164539628   164539628   164539628
+
+==32092== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124989    0.124989    0.124989
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.001982    0.001982    0.001982
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.091523    0.091523    0.091523
+          1                      dram_read_throughput             Device Memory Read Throughput  42.051MB/s  42.051MB/s  42.051MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  5.4722GB/s  5.4722GB/s  5.4722GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.50%      12.50%      12.50%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32100== NVPROF is profiling process 32100, command: ./bigMultiplicationWithSM3_padding1.bin
+==32100== Profiling application: ./bigMultiplicationWithSM3_padding1.bin
+==32100== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 98.93%  129.47ms         1  129.47ms  129.47ms  129.47ms  batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  0.80%  1.0518ms         3  350.60us  334.47us  365.48us  [CUDA memcpy HtoD]
+  0.26%  345.35us         1  345.35us  345.35us  345.35us  [CUDA memcpy DtoH]
+
+==32100== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 71.98%  129.62ms         1  129.62ms  129.62ms  129.62ms  cudaDeviceSynchronize
+ 26.60%  47.902ms         2  23.951ms     878ns  47.901ms  cudaEventCreate
+  1.04%  1.8699ms         4  467.48us  348.61us  669.45us  cudaMemcpy
+  0.14%  253.77us         3  84.589us  82.498us  85.961us  cudaMalloc
+  0.10%  175.55us         3  58.515us  44.074us  85.309us  cudaFree
+  0.10%  173.77us        83  2.0930us     143ns  73.396us  cuDeviceGetAttribute
+  0.01%  26.347us         1  26.347us  26.347us  26.347us  cudaLaunch
+  0.01%  23.888us         1  23.888us  23.888us  23.888us  cuDeviceTotalMem
+  0.01%  18.901us         1  18.901us  18.901us  18.901us  cuDeviceGetName
+  0.00%  7.5480us         2  3.7740us  3.5100us  4.0380us  cudaEventRecord
+  0.00%  6.9560us         1  6.9560us  6.9560us  6.9560us  cudaEventSynchronize
+  0.00%  4.5790us         4  1.1440us     160ns  3.8960us  cudaSetupArgument
+  0.00%  2.7620us         1  2.7620us  2.7620us  2.7620us  cudaEventElapsedTime
+  0.00%  1.2520us         2     626ns     195ns  1.0570us  cuDeviceGet
+  0.00%     946ns         1     946ns     946ns     946ns  cudaConfigureCall
+  0.00%     837ns         2     418ns     233ns     604ns  cuDeviceGetCount
+  0.00%     344ns         1     344ns     344ns     344ns  cudaGetLastError
+#########################################################################################################################################
+==32108== NVPROF is profiling process 32108, command: ./bigMultiplicationWithSM3_padding1.bin
+==32108== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32108== Profiling application: ./bigMultiplicationWithSM3_padding1.bin
+==32108== Profiling result:
+==32108== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm   207957112   207957112   207957112
+
+==32108== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.093571    0.093571    0.093571
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000242    0.000242    0.000242
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.085619    0.085619    0.085619
+          1                      dram_read_throughput             Device Memory Read Throughput  33.305MB/s  33.305MB/s  33.305MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  3.7193GB/s  3.7193GB/s  3.7193GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      53.95%      53.95%      53.95%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32116== NVPROF is profiling process 32116, command: ./bigMultiplicationWithSM3_padding2.bin
+==32116== Profiling application: ./bigMultiplicationWithSM3_padding2.bin
+==32116== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.23%  179.53ms         1  179.53ms  179.53ms  179.53ms  batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  0.58%  1.0539ms         3  351.30us  334.12us  372.52us  [CUDA memcpy HtoD]
+  0.19%  346.15us         1  346.15us  346.15us  346.15us  [CUDA memcpy DtoH]
+
+==32116== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 81.39%  179.68ms         1  179.68ms  179.68ms  179.68ms  cudaDeviceSynchronize
+ 17.45%  38.513ms         2  19.257ms     904ns  38.512ms  cudaEventCreate
+  0.83%  1.8321ms         4  458.03us  344.89us  620.76us  cudaMemcpy
+  0.11%  250.80us         3  83.599us  79.831us  87.227us  cudaMalloc
+  0.10%  210.90us        83  2.5400us     207ns  87.821us  cuDeviceGetAttribute
+  0.08%  172.64us         3  57.548us  43.480us  83.565us  cudaFree
+  0.01%  27.990us         1  27.990us  27.990us  27.990us  cuDeviceTotalMem
+  0.01%  25.816us         1  25.816us  25.816us  25.816us  cudaLaunch
+  0.01%  21.766us         1  21.766us  21.766us  21.766us  cuDeviceGetName
+  0.00%  7.7880us         2  3.8940us  3.0540us  4.7340us  cudaEventRecord
+  0.00%  6.9850us         1  6.9850us  6.9850us  6.9850us  cudaEventSynchronize
+  0.00%  6.2420us         4  1.5600us     162ns  4.2910us  cudaSetupArgument
+  0.00%  2.6940us         1  2.6940us  2.6940us  2.6940us  cudaEventElapsedTime
+  0.00%  1.6710us         2     835ns     263ns  1.4080us  cuDeviceGet
+  0.00%  1.2390us         2     619ns     319ns     920ns  cuDeviceGetCount
+  0.00%     902ns         1     902ns     902ns     902ns  cudaConfigureCall
+  0.00%     228ns         1     228ns     228ns     228ns  cudaGetLastError
+#########################################################################################################################################
+==32124== NVPROF is profiling process 32124, command: ./bigMultiplicationWithSM3_padding2.bin
+==32124== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32124== Profiling application: ./bigMultiplicationWithSM3_padding2.bin
+==32124== Profiling result:
+==32124== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm   290900800   290900800   290900800
+
+==32124== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.062498    0.062498    0.062498
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000262    0.000262    0.000262
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.074364    0.074364    0.074364
+          1                      dram_read_throughput             Device Memory Read Throughput  23.519MB/s  23.519MB/s  23.519MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  1.8471GB/s  1.8471GB/s  1.8471GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      51.81%      51.81%      51.81%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32048== NVPROF is profiling process 32048, command: ./bigMultiplicationWithSM.bin
+==32048== Profiling application: ./bigMultiplicationWithSM.bin
+==32048== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.85%  985.34ms         1  985.34ms  985.34ms  985.34ms  batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  0.11%  1.0649ms         3  354.98us  334.02us  386.82us  [CUDA memcpy HtoD]
+  0.04%  416.96us         1  416.96us  416.96us  416.96us  [CUDA memcpy DtoH]
+
+==32048== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 95.64%  985.35ms         1  985.35ms  985.35ms  985.35ms  cudaDeviceSynchronize
+  3.90%  40.196ms         2  20.098ms  2.1880us  40.194ms  cudaEventCreate
+  0.22%  2.2749ms         4  568.72us  392.44us  1.0768ms  cudaMemcpy
+  0.12%  1.2718ms         1  1.2718ms  1.2718ms  1.2718ms  cudaEventSynchronize
+  0.04%  396.54us         1  396.54us  396.54us  396.54us  cudaLaunch
+  0.03%  276.97us         3  92.322us  87.544us  98.652us  cudaFree
+  0.03%  259.53us         3  86.509us  81.375us  91.394us  cudaMalloc
+  0.02%  179.97us        83  2.1680us     157ns  75.858us  cuDeviceGetAttribute
+  0.00%  24.147us         1  24.147us  24.147us  24.147us  cuDeviceTotalMem
+  0.00%  18.613us         1  18.613us  18.613us  18.613us  cuDeviceGetName
+  0.00%  8.9000us         2  4.4500us  4.4310us  4.4690us  cudaEventRecord
+  0.00%  6.3900us         1  6.3900us  6.3900us  6.3900us  cudaEventElapsedTime
+  0.00%  5.1660us         4  1.2910us     167ns  4.3880us  cudaSetupArgument
+  0.00%  1.3120us         2     656ns     176ns  1.1360us  cuDeviceGet
+  0.00%     939ns         2     469ns     213ns     726ns  cuDeviceGetCount
+  0.00%     658ns         1     658ns     658ns     658ns  cudaConfigureCall
+  0.00%     292ns         1     292ns     292ns     292ns  cudaGetLastError
+#########################################################################################################################################
+==32057== NVPROF is profiling process 32057, command: ./bigMultiplicationWithSM.bin
+==32057== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32057== Profiling application: ./bigMultiplicationWithSM.bin
+==32057== Profiling result:
+==32057== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm  1595165496  1595165496  1595165496
+
+==32057== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.122705    0.122705    0.122705
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000754    0.000754    0.000754
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.138753    0.138753    0.138753
+          1                      dram_read_throughput             Device Memory Read Throughput  6.8578GB/s  6.8578GB/s  6.8578GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  1.5667GB/s  1.5667GB/s  1.5667GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.50%      12.50%      12.50%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32133== NVPROF is profiling process 32133, command: ./bigMultiplicationWithoutSM.bin
+==32133== Profiling application: ./bigMultiplicationWithoutSM.bin
+==32133== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.64%  403.96ms         1  403.96ms  403.96ms  403.96ms  batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  0.26%  1.0569ms         3  352.29us  334.31us  361.60us  [CUDA memcpy HtoD]
+  0.10%  413.16us         1  413.16us  413.16us  413.16us  [CUDA memcpy DtoH]
+
+==32133== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 90.55%  404.13ms         1  404.13ms  404.13ms  404.13ms  cudaDeviceSynchronize
+  8.81%  39.302ms         2  19.651ms     865ns  39.301ms  cudaEventCreate
+  0.45%  1.9975ms         4  499.38us  324.12us  873.97us  cudaMemcpy
+  0.07%  302.06us         3  100.69us  60.436us  173.80us  cudaFree
+  0.06%  289.78us         3  96.594us  85.200us  117.58us  cudaMalloc
+  0.04%  180.59us        83  2.1750us     157ns  76.122us  cuDeviceGetAttribute
+  0.01%  28.704us         1  28.704us  28.704us  28.704us  cudaEventSynchronize
+  0.01%  25.199us         1  25.199us  25.199us  25.199us  cudaLaunch
+  0.01%  24.487us         1  24.487us  24.487us  24.487us  cuDeviceTotalMem
+  0.00%  19.376us         1  19.376us  19.376us  19.376us  cuDeviceGetName
+  0.00%  7.8630us         2  3.9310us  3.6160us  4.2470us  cudaEventRecord
+  0.00%  4.7240us         4  1.1810us     151ns  4.0610us  cudaSetupArgument
+  0.00%  2.8970us         1  2.8970us  2.8970us  2.8970us  cudaEventElapsedTime
+  0.00%  1.2770us         2     638ns     194ns  1.0830us  cuDeviceGet
+  0.00%     944ns         2     472ns     271ns     673ns  cuDeviceGetCount
+  0.00%     875ns         1     875ns     875ns     875ns  cudaConfigureCall
+  0.00%     331ns         1     331ns     331ns     331ns  cudaGetLastError
+#########################################################################################################################################
+==32141== NVPROF is profiling process 32141, command: ./bigMultiplicationWithoutSM.bin
+==32141== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32141== Profiling application: ./bigMultiplicationWithoutSM.bin
+==32141== Profiling result:
+==32141== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm   655390528   655390528   655390528
+
+==32141== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.474354    0.474354    0.474354
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.083859    0.083859    0.083859
+          1                      dram_read_throughput             Device Memory Read Throughput  7.8146GB/s  7.8146GB/s  7.8146GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  8.4158GB/s  8.4158GB/s  8.4158GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32149== NVPROF is profiling process 32149, command: ./commonAddition1.bin
+==32149== Profiling application: ./commonAddition1.bin
+==32149== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 47.12%  1.2523ms         1  1.2523ms  1.2523ms  1.2523ms  batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+ 39.83%  1.0587ms         3  352.88us  336.10us  368.87us  [CUDA memcpy HtoD]
+ 13.05%  346.98us         1  346.98us  346.98us  346.98us  [CUDA memcpy DtoH]
+
+==32149== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 90.91%  38.552ms         2  19.276ms     891ns  38.551ms  cudaEventCreate
+  4.20%  1.7792ms         4  444.79us  335.97us  548.22us  cudaMemcpy
+  3.30%  1.3984ms         1  1.3984ms  1.3984ms  1.3984ms  cudaDeviceSynchronize
+  0.59%  250.67us         3  83.555us  79.319us  88.354us  cudaMalloc
+  0.41%  174.04us        83  2.0960us     147ns  73.501us  cuDeviceGetAttribute
+  0.38%  162.02us         3  54.006us  41.422us  75.733us  cudaFree
+  0.06%  25.200us         1  25.200us  25.200us  25.200us  cudaLaunch
+  0.06%  23.700us         1  23.700us  23.700us  23.700us  cuDeviceTotalMem
+  0.04%  18.338us         1  18.338us  18.338us  18.338us  cuDeviceGetName
+  0.02%  7.0840us         1  7.0840us  7.0840us  7.0840us  cudaEventSynchronize
+  0.02%  6.8670us         2  3.4330us  2.4530us  4.4140us  cudaEventRecord
+  0.01%  4.4820us         4  1.1200us     150ns  3.7900us  cudaSetupArgument
+  0.01%  2.2940us         1  2.2940us  2.2940us  2.2940us  cudaEventElapsedTime
+  0.00%  1.2170us         2     608ns     162ns  1.0550us  cuDeviceGet
+  0.00%     938ns         1     938ns     938ns     938ns  cudaConfigureCall
+  0.00%     893ns         2     446ns     233ns     660ns  cuDeviceGetCount
+  0.00%     221ns         1     221ns     221ns     221ns  cudaGetLastError
+#########################################################################################################################################
+==32157== NVPROF is profiling process 32157, command: ./commonAddition1.bin
+==32157== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32157== Profiling application: ./commonAddition1.bin
+==32157== Profiling result:
+==32157== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm     2041816     2041816     2041816
+
+==32157== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.471053    0.471053    0.471053
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  13.291GB/s  13.291GB/s  13.291GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  6.6722GB/s  6.6722GB/s  6.6722GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32165== NVPROF is profiling process 32165, command: ./commonAddition2.bin
+==32165== Profiling application: ./commonAddition2.bin
+==32165== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 94.59%  25.360ms         1  25.360ms  25.360ms  25.360ms  batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+  4.10%  1.1002ms         3  366.75us  334.02us  402.06us  [CUDA memcpy HtoD]
+  1.30%  349.06us         1  349.06us  349.06us  349.06us  [CUDA memcpy DtoH]
+
+==32165== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 57.80%  38.680ms         2  19.340ms     885ns  38.679ms  cudaEventCreate
+ 38.14%  25.525ms         1  25.525ms  25.525ms  25.525ms  cudaDeviceSynchronize
+  3.02%  2.0179ms         4  504.48us  388.46us  790.26us  cudaMemcpy
+  0.38%  253.27us         3  84.424us  81.758us  86.340us  cudaMalloc
+  0.29%  191.61us        83  2.3080us     156ns  84.985us  cuDeviceGetAttribute
+  0.24%  160.48us         3  53.494us  41.167us  75.143us  cudaFree
+  0.04%  25.940us         1  25.940us  25.940us  25.940us  cudaLaunch
+  0.04%  25.894us         1  25.894us  25.894us  25.894us  cuDeviceTotalMem
+  0.03%  20.329us         1  20.329us  20.329us  20.329us  cuDeviceGetName
+  0.01%  7.1460us         1  7.1460us  7.1460us  7.1460us  cudaEventSynchronize
+  0.01%  6.6670us         2  3.3330us  2.8510us  3.8160us  cudaEventRecord
+  0.01%  4.3070us         4  1.0760us     157ns  3.6350us  cudaSetupArgument
+  0.00%  2.6390us         1  2.6390us  2.6390us  2.6390us  cudaEventElapsedTime
+  0.00%  1.5180us         2     759ns     208ns  1.3100us  cuDeviceGet
+  0.00%  1.0420us         2     521ns     271ns     771ns  cuDeviceGetCount
+  0.00%     973ns         1     973ns     973ns     973ns  cudaConfigureCall
+  0.00%     317ns         1     317ns     317ns     317ns  cudaGetLastError
+#########################################################################################################################################
+==32173== NVPROF is profiling process 32173, command: ./commonAddition2.bin
+==32173== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32173== Profiling application: ./commonAddition2.bin
+==32173== Profiling result:
+==32173== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm    41082128    41082128    41082128
+
+==32173== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchBigAdd(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124863    0.124863    0.124863
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.514641    0.514641    0.514641
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  165.41MB/s  165.41MB/s  165.41MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  273.27MB/s  273.27MB/s  273.27MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.75%      12.75%      12.75%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+#########################################################################################################################################
+==32181== NVPROF is profiling process 32181, command: ./normalAdditionWithSM.bin
+==32181== Profiling application: ./normalAdditionWithSM.bin
+==32181== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 90.49%  6.3704ms         1  6.3704ms  6.3704ms  6.3704ms  batchNormalAdd(int*, int*, int*)
+  7.15%  503.56us         3  167.85us  167.01us  168.68us  [CUDA memcpy HtoD]
+  2.35%  165.73us         1  165.73us  165.73us  165.73us  [CUDA memcpy DtoH]
+
+==32181== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 81.88%  38.345ms         2  19.172ms  1.0470us  38.344ms  cudaEventCreate
+ 13.92%  6.5165ms         1  6.5165ms  6.5165ms  6.5165ms  cudaDeviceSynchronize
+  2.74%  1.2812ms         4  320.29us  172.90us  618.37us  cudaMemcpy
+  0.54%  251.25us         3  83.751us  83.610us  83.895us  cudaMalloc
+  0.39%  183.38us        83  2.2090us     148ns  73.424us  cuDeviceGetAttribute
+  0.35%  162.36us         3  54.121us  41.364us  76.414us  cudaFree
+  0.05%  25.662us         1  25.662us  25.662us  25.662us  cudaLaunch
+  0.05%  23.825us         1  23.825us  23.825us  23.825us  cuDeviceTotalMem
+  0.04%  18.333us         1  18.333us  18.333us  18.333us  cuDeviceGetName
+  0.01%  6.9910us         1  6.9910us  6.9910us  6.9910us  cudaEventSynchronize
+  0.01%  6.6520us         2  3.3260us  2.4970us  4.1550us  cudaEventRecord
+  0.01%  3.7690us         3  1.2560us     199ns  3.2480us  cudaSetupArgument
+  0.01%  2.8240us         1  2.8240us  2.8240us  2.8240us  cudaEventElapsedTime
+  0.00%  1.2310us         2     615ns     168ns  1.0630us  cuDeviceGet
+  0.00%     876ns         2     438ns     262ns     614ns  cuDeviceGetCount
+  0.00%     653ns         1     653ns     653ns     653ns  cudaConfigureCall
+  0.00%     233ns         1     233ns     233ns     233ns  cudaGetLastError
+#########################################################################################################################################
+==32189== NVPROF is profiling process 32189, command: ./normalAdditionWithSM.bin
+==32189== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32189== Profiling application: ./normalAdditionWithSM.bin
+==32189== Profiling result:
+==32189== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalAdd(int*, int*, int*)
+          1                         elapsed_cycles_sm    10316216    10316216    10316216
+
+==32189== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalAdd(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.249399    0.249399    0.249399
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.286762    0.286762    0.286762
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  329.52MB/s  329.52MB/s  329.52MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  836.08MB/s  836.08MB/s  836.08MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      12.77%      12.77%      12.77%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Mid (4)     Mid (4)     Mid (4)
+#########################################################################################################################################
+==32197== NVPROF is profiling process 32197, command: ./normalAdditionWithoutSM.bin
+==32197== Profiling application: ./normalAdditionWithoutSM.bin
+==32197== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.36%  103.40ms         1  103.40ms  103.40ms  103.40ms  batchNormalAdd(int*, int*, int*)
+  0.49%  504.84us         3  168.28us  167.07us  169.44us  [CUDA memcpy HtoD]
+  0.16%  165.70us         1  165.70us  165.70us  165.70us  [CUDA memcpy DtoH]
+
+==32197== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 71.45%  103.55ms         1  103.55ms  103.55ms  103.55ms  cudaDeviceSynchronize
+ 27.17%  39.373ms         2  19.687ms  1.0610us  39.372ms  cudaEventCreate
+  0.89%  1.2890ms         4  322.26us  180.70us  615.93us  cudaMemcpy
+  0.18%  260.64us         3  86.878us  85.596us  88.900us  cudaMalloc
+  0.13%  187.68us        83  2.2610us     144ns  78.005us  cuDeviceGetAttribute
+  0.12%  171.68us         3  57.228us  43.144us  83.516us  cudaFree
+  0.02%  26.201us         1  26.201us  26.201us  26.201us  cudaLaunch
+  0.02%  23.789us         1  23.789us  23.789us  23.789us  cuDeviceTotalMem
+  0.01%  18.292us         1  18.292us  18.292us  18.292us  cuDeviceGetName
+  0.00%  6.9740us         2  3.4870us  3.0520us  3.9220us  cudaEventRecord
+  0.00%  6.7170us         1  6.7170us  6.7170us  6.7170us  cudaEventSynchronize
+  0.00%  4.2880us         3  1.4290us     214ns  3.7170us  cudaSetupArgument
+  0.00%  3.0180us         1  3.0180us  3.0180us  3.0180us  cudaEventElapsedTime
+  0.00%  1.2180us         2     609ns     175ns  1.0430us  cuDeviceGet
+  0.00%     840ns         2     420ns     214ns     626ns  cuDeviceGetCount
+  0.00%     805ns         1     805ns     805ns     805ns  cudaConfigureCall
+  0.00%     288ns         1     288ns     288ns     288ns  cudaGetLastError
+#########################################################################################################################################
+==32205== NVPROF is profiling process 32205, command: ./normalAdditionWithoutSM.bin
+==32205== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32205== Profiling application: ./normalAdditionWithoutSM.bin
+==32205== Profiling result:
+==32205== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalAdd(int*, int*, int*)
+          1                         elapsed_cycles_sm   168536996   168536996   168536996
+
+==32205== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalAdd(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.491152    0.491152    0.491152
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  11.146GB/s  11.146GB/s  11.146GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  7.7575GB/s  7.7575GB/s  7.7575GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32213== NVPROF is profiling process 32213, command: ./normalDoubleMultiplicationWithSM.bin
+==32213== Profiling application: ./normalDoubleMultiplicationWithSM.bin
+==32213== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 57.04%  1.8758ms         1  1.8758ms  1.8758ms  1.8758ms  batchNormalMul(int*, int*, int*)
+ 32.76%  1.0774ms         3  359.14us  334.02us  374.31us  [CUDA memcpy HtoD]
+ 10.20%  335.34us         1  335.34us  335.34us  335.34us  [CUDA memcpy DtoH]
+
+==32213== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 88.53%  38.074ms         2  19.037ms     979ns  38.073ms  cudaEventCreate
+  5.12%  2.2037ms         4  550.93us  381.83us  988.12us  cudaMemcpy
+  4.75%  2.0407ms         1  2.0407ms  2.0407ms  2.0407ms  cudaDeviceSynchronize
+  0.58%  249.90us         3  83.300us  81.305us  84.462us  cudaMalloc
+  0.40%  173.99us        83  2.0960us     144ns  73.314us  cuDeviceGetAttribute
+  0.37%  160.71us         3  53.568us  41.151us  75.088us  cudaFree
+  0.08%  32.820us         1  32.820us  32.820us  32.820us  cuDeviceTotalMem
+  0.06%  26.157us         1  26.157us  26.157us  26.157us  cudaLaunch
+  0.04%  18.080us         1  18.080us  18.080us  18.080us  cuDeviceGetName
+  0.02%  7.3180us         2  3.6590us  2.9770us  4.3410us  cudaEventRecord
+  0.02%  7.0380us         1  7.0380us  7.0380us  7.0380us  cudaEventSynchronize
+  0.01%  3.9590us         3  1.3190us     193ns  3.4490us  cudaSetupArgument
+  0.01%  3.5470us         1  3.5470us  3.5470us  3.5470us  cudaEventElapsedTime
+  0.00%  1.2270us         2     613ns     184ns  1.0430us  cuDeviceGet
+  0.00%     860ns         2     430ns     236ns     624ns  cuDeviceGetCount
+  0.00%     605ns         1     605ns     605ns     605ns  cudaConfigureCall
+  0.00%     238ns         1     238ns     238ns     238ns  cudaGetLastError
+#########################################################################################################################################
+==32221== NVPROF is profiling process 32221, command: ./normalDoubleMultiplicationWithSM.bin
+==32221== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32221== Profiling application: ./normalDoubleMultiplicationWithSM.bin
+==32221== Profiling result:
+==32221== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                         elapsed_cycles_sm     3072008     3072008     3072008
+
+==32221== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.123485    0.123485    0.123485
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.495575    0.495575    0.495575
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  2.2402GB/s  2.2402GB/s  2.2402GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  7.0792GB/s  7.0792GB/s  7.0792GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      25.00%      25.00%      25.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+#########################################################################################################################################
+==32229== NVPROF is profiling process 32229, command: ./normalDoubleMultiplicationWithoutSM.bin
+==32229== Profiling application: ./normalDoubleMultiplicationWithoutSM.bin
+==32229== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.43%  248.64ms         1  248.64ms  248.64ms  248.64ms  batchNormalMul(int*, int*, int*)
+  0.43%  1.0741ms         3  358.02us  340.23us  369.73us  [CUDA memcpy HtoD]
+  0.14%  346.79us         1  346.79us  346.79us  346.79us  [CUDA memcpy DtoH]
+
+==32229== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 85.91%  248.78ms         1  248.78ms  248.78ms  248.78ms  cudaDeviceSynchronize
+ 13.24%  38.347ms         2  19.174ms  1.0250us  38.346ms  cudaEventCreate
+  0.59%  1.7173ms         4  429.33us  376.76us  509.81us  cudaMemcpy
+  0.09%  269.21us         3  89.737us  85.239us  93.104us  cudaMalloc
+  0.06%  180.20us        83  2.1710us     155ns  75.963us  cuDeviceGetAttribute
+  0.06%  176.01us         3  58.669us  43.036us  87.438us  cudaFree
+  0.01%  29.414us         1  29.414us  29.414us  29.414us  cudaLaunch
+  0.01%  24.287us         1  24.287us  24.287us  24.287us  cuDeviceTotalMem
+  0.01%  18.755us         1  18.755us  18.755us  18.755us  cuDeviceGetName
+  0.00%  7.0480us         2  3.5240us  3.1400us  3.9080us  cudaEventRecord
+  0.00%  6.8130us         1  6.8130us  6.8130us  6.8130us  cudaEventSynchronize
+  0.00%  4.9850us         3  1.6610us     245ns  4.3020us  cudaSetupArgument
+  0.00%  3.2230us         1  3.2230us  3.2230us  3.2230us  cudaEventElapsedTime
+  0.00%  1.2760us         2     638ns     193ns  1.0830us  cuDeviceGet
+  0.00%  1.2440us         2     622ns     338ns     906ns  cuDeviceGetCount
+  0.00%  1.0170us         1  1.0170us  1.0170us  1.0170us  cudaConfigureCall
+  0.00%     307ns         1     307ns     307ns     307ns  cudaGetLastError
+#########################################################################################################################################
+==32237== NVPROF is profiling process 32237, command: ./normalDoubleMultiplicationWithoutSM.bin
+==32237== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32237== Profiling application: ./normalDoubleMultiplicationWithoutSM.bin
+==32237== Profiling result:
+==32237== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                         elapsed_cycles_sm   403056372   403056372   403056372
+
+==32237== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.491946    0.491946    0.491946
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  13.404GB/s  13.404GB/s  13.404GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  6.7423GB/s  6.7423GB/s  6.7423GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32245== NVPROF is profiling process 32245, command: ./normalMontMultiplicationWithSM.bin
+==32245== Profiling application: ./normalMontMultiplicationWithSM.bin
+==32245== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 56.07%  1.8066ms         1  1.8066ms  1.8066ms  1.8066ms  batchNormalMul(int*, int*, int*)
+ 33.02%  1.0639ms         4  265.97us     960ns  370.51us  [CUDA memcpy HtoD]
+ 10.91%  351.63us         1  351.63us  351.63us  351.63us  [CUDA memcpy DtoH]
+
+==32245== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 89.43%  38.698ms         2  19.349ms     859ns  38.697ms  cudaEventCreate
+  4.54%  1.9624ms         1  1.9624ms  1.9624ms  1.9624ms  cudaDeviceSynchronize
+  4.42%  1.9128ms         4  478.20us  373.01us  704.86us  cudaMemcpy
+  0.57%  248.16us         3  82.719us  79.512us  86.923us  cudaMalloc
+  0.40%  173.52us        83  2.0900us     145ns  73.443us  cuDeviceGetAttribute
+  0.37%  161.33us         3  53.777us  44.152us  71.253us  cudaFree
+  0.08%  32.674us         1  32.674us  32.674us  32.674us  cuDeviceTotalMem
+  0.06%  27.267us         1  27.267us  27.267us  27.267us  cudaLaunch
+  0.04%  18.281us         1  18.281us  18.281us  18.281us  cuDeviceGetName
+  0.03%  12.965us         1  12.965us  12.965us  12.965us  cudaMemcpyToSymbol
+  0.02%  7.2150us         2  3.6070us  3.0710us  4.1440us  cudaEventRecord
+  0.01%  5.6260us         1  5.6260us  5.6260us  5.6260us  cudaEventSynchronize
+  0.01%  4.8260us         3  1.6080us     189ns  4.3400us  cudaSetupArgument
+  0.01%  2.4060us         1  2.4060us  2.4060us  2.4060us  cudaEventElapsedTime
+  0.00%  1.4400us         2     720ns     191ns  1.2490us  cuDeviceGet
+  0.00%  1.0000us         1  1.0000us  1.0000us  1.0000us  cudaConfigureCall
+  0.00%     825ns         2     412ns     217ns     608ns  cuDeviceGetCount
+  0.00%     238ns         1     238ns     238ns     238ns  cudaGetLastError
+#########################################################################################################################################
+==32253== NVPROF is profiling process 32253, command: ./normalMontMultiplicationWithSM.bin
+==32253== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32253== Profiling application: ./normalMontMultiplicationWithSM.bin
+==32253== Profiling result:
+==32253== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                         elapsed_cycles_sm     2938956     2938956     2938956
+
+==32253== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.124388    0.124388    0.124388
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.263323    0.263323    0.263323
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  2.3222GB/s  2.3222GB/s  2.3222GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  6.9023GB/s  6.9023GB/s  6.9023GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      25.00%      25.00%      25.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (2)     Low (2)     Low (2)
+#########################################################################################################################################
+==32261== NVPROF is profiling process 32261, command: ./normalMontMultiplicationWithoutSM.bin
+==32261== Profiling application: ./normalMontMultiplicationWithoutSM.bin
+==32261== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.43%  248.61ms         1  248.61ms  248.61ms  248.61ms  batchNormalMul(int*, int*, int*)
+  0.43%  1.0657ms         4  266.43us     960ns  371.49us  [CUDA memcpy HtoD]
+  0.14%  352.68us         1  352.68us  352.68us  352.68us  [CUDA memcpy DtoH]
+
+==32261== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 85.79%  248.77ms         1  248.77ms  248.77ms  248.77ms  cudaDeviceSynchronize
+ 13.29%  38.536ms         2  19.268ms     995ns  38.535ms  cudaEventCreate
+  0.67%  1.9454ms         4  486.35us  372.02us  746.26us  cudaMemcpy
+  0.09%  251.91us         3  83.970us  79.903us  87.110us  cudaMalloc
+  0.07%  189.76us         3  63.253us  44.071us  100.51us  cudaFree
+  0.06%  183.61us        83  2.2120us     146ns  73.795us  cuDeviceGetAttribute
+  0.01%  27.259us         1  27.259us  27.259us  27.259us  cudaLaunch
+  0.01%  23.873us         1  23.873us  23.873us  23.873us  cuDeviceTotalMem
+  0.01%  18.264us         1  18.264us  18.264us  18.264us  cuDeviceGetName
+  0.00%  13.290us         1  13.290us  13.290us  13.290us  cudaMemcpyToSymbol
+  0.00%  7.8570us         2  3.9280us  3.7620us  4.0950us  cudaEventRecord
+  0.00%  5.0350us         1  5.0350us  5.0350us  5.0350us  cudaEventSynchronize
+  0.00%  4.2870us         3  1.4290us     239ns  3.7290us  cudaSetupArgument
+  0.00%  2.6740us         1  2.6740us  2.6740us  2.6740us  cudaEventElapsedTime
+  0.00%  1.2220us         2     611ns     184ns  1.0380us  cuDeviceGet
+  0.00%     870ns         1     870ns     870ns     870ns  cudaConfigureCall
+  0.00%     854ns         2     427ns     233ns     621ns  cuDeviceGetCount
+  0.00%     597ns         1     597ns     597ns     597ns  cudaGetLastError
+#########################################################################################################################################
+==32269== NVPROF is profiling process 32269, command: ./normalMontMultiplicationWithoutSM.bin
+==32269== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32269== Profiling application: ./normalMontMultiplicationWithoutSM.bin
+==32269== Profiling result:
+==32269== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                         elapsed_cycles_sm   403099812   403099812   403099812
+
+==32269== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: batchNormalMul(int*, int*, int*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.492964    0.492964    0.492964
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  13.433GB/s  13.433GB/s  13.433GB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  6.7389GB/s  6.7389GB/s  6.7389GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32277== NVPROF is profiling process 32277, command: ./subtraction.bin
+==32277== Profiling application: ./subtraction.bin
+==32277== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 63.81%  10.496us         1  10.496us  10.496us  10.496us  bigSub(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+ 19.84%  3.2640us         3  1.0880us     960ns  1.3120us  [CUDA memcpy HtoD]
+ 16.34%  2.6880us         1  2.6880us  2.6880us  2.6880us  [CUDA memcpy DtoH]
+
+==32277== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.19%  38.413ms         3  12.804ms  4.8080us  38.402ms  cudaMalloc
+  0.45%  174.34us        83  2.1000us     144ns  73.611us  cuDeviceGetAttribute
+  0.10%  39.755us         4  9.9380us  3.3410us  16.942us  cudaMemcpy
+  0.09%  33.118us         1  33.118us  33.118us  33.118us  cuDeviceTotalMem
+  0.07%  26.879us         1  26.879us  26.879us  26.879us  cudaLaunch
+  0.05%  18.685us         1  18.685us  18.685us  18.685us  cuDeviceGetName
+  0.04%  14.782us         1  14.782us  14.782us  14.782us  cudaDeviceSynchronize
+  0.01%  3.7060us         4     926ns     198ns  2.9270us  cudaSetupArgument
+  0.00%  1.1900us         2     595ns     162ns  1.0280us  cuDeviceGet
+  0.00%     875ns         2     437ns     240ns     635ns  cuDeviceGetCount
+  0.00%     721ns         1     721ns     721ns     721ns  cudaConfigureCall
+  0.00%     247ns         1     247ns     247ns     247ns  cudaGetLastError
+#########################################################################################################################################
+==32285== NVPROF is profiling process 32285, command: ./subtraction.bin
+==32285== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32285== Profiling application: ./subtraction.bin
+==32285== Profiling result:
+==32285== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: bigSub(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm       21084       21084       21084
+
+==32285== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: bigSub(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.015625    0.015625    0.015625
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.000000    0.000000    0.000000
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  0.00000B/s  0.00000B/s  0.00000B/s
+          1                     dram_write_throughput            Device Memory Write Throughput  24.288MB/s  24.288MB/s  24.288MB/s
+          1                         shared_efficiency                  Shared Memory Efficiency       0.00%       0.00%       0.00%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Low (1)     Low (1)     Low (1)
+#########################################################################################################################################
+==32293== NVPROF is profiling process 32293, command: ./unsignedMultiplicationWithSM.bin
+==32293== Profiling application: ./unsignedMultiplicationWithSM.bin
+==32293== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 48.29%  1.0934ms         3  364.47us  334.06us  399.02us  [CUDA memcpy HtoD]
+ 36.60%  828.69us         1  828.69us  828.69us  828.69us  unsignedMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+ 15.11%  342.15us         1  342.15us  342.15us  342.15us  [CUDA memcpy DtoH]
+
+==32293== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 90.94%  38.293ms         2  19.147ms  1.0270us  38.292ms  cudaEventCreate
+  5.06%  2.1303ms         4  532.58us  397.49us  880.41us  cudaMemcpy
+  2.31%  973.66us         1  973.66us  973.66us  973.66us  cudaDeviceSynchronize
+  0.64%  267.99us         3  89.330us  79.627us  105.01us  cudaMalloc
+  0.43%  182.97us        83  2.2040us     142ns  73.444us  cuDeviceGetAttribute
+  0.39%  162.51us         3  54.170us  42.476us  74.828us  cudaFree
+  0.07%  28.352us         1  28.352us  28.352us  28.352us  cudaLaunch
+  0.06%  23.741us         1  23.741us  23.741us  23.741us  cuDeviceTotalMem
+  0.04%  18.318us         1  18.318us  18.318us  18.318us  cuDeviceGetName
+  0.02%  7.1890us         2  3.5940us  2.8600us  4.3290us  cudaEventRecord
+  0.02%  7.0780us         1  7.0780us  7.0780us  7.0780us  cudaEventSynchronize
+  0.01%  4.5510us         4  1.1370us     188ns  3.7600us  cudaSetupArgument
+  0.01%  2.9730us         1  2.9730us  2.9730us  2.9730us  cudaEventElapsedTime
+  0.00%  1.2510us         2     625ns     169ns  1.0820us  cuDeviceGet
+  0.00%     864ns         2     432ns     275ns     589ns  cuDeviceGetCount
+  0.00%     801ns         1     801ns     801ns     801ns  cudaConfigureCall
+  0.00%     265ns         1     265ns     265ns     265ns  cudaGetLastError
+#########################################################################################################################################
+==32301== NVPROF is profiling process 32301, command: ./unsignedMultiplicationWithSM.bin
+==32301== Warning: Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==32301== Profiling application: ./unsignedMultiplicationWithSM.bin
+==32301== Profiling result:
+==32301== Event result:
+Invocations                                Event Name         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: unsignedMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                         elapsed_cycles_sm     1347556     1347556     1347556
+
+==32301== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "GeForce GTX 760M (0)"
+	Kernel: unsignedMul(unsigned long, unsigned long*, unsigned long*, unsigned long*)
+          1                        achieved_occupancy                        Achieved Occupancy    0.480244    0.480244    0.480244
+          1                    shared_replay_overhead             Shared Memory Replay Overhead    0.179502    0.179502    0.179502
+          1                     local_replay_overhead        Local Memory Cache Replay Overhead    0.000000    0.000000    0.000000
+          1                      dram_read_throughput             Device Memory Read Throughput  3.6288MB/s  3.6288MB/s  3.6288MB/s
+          1                     dram_write_throughput            Device Memory Write Throughput  1.3942GB/s  1.3942GB/s  1.3942GB/s
+          1                         shared_efficiency                  Shared Memory Efficiency      50.33%      50.33%      50.33%
+          1                     l1_shared_utilization              L1/Shared Memory Utilization     Mid (5)     Mid (5)     Mid (5)
+#########################################################################################################################################
