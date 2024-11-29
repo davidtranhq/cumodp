@@ -1,0 +1,21 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-Igoogletest/googletest/include",
+      "-I..",
+      "-Wall",
+      "-Werror",
+      "-Wpedantic",
+      "-std=c++20",
+      "-O3",
+      "-c",
+      "-o",
+      "../duzp.o",
+      "../duzp.cpp"
+    ],
+    "directory": "/Users/david/src/cumodp/src/parallel-integer-polynomial-multiplication/tests",
+    "file": "/Users/david/src/cumodp/src/parallel-integer-polynomial-multiplication/duzp.cpp",
+    "output": "/Users/david/src/cumodp/src/parallel-integer-polynomial-multiplication/duzp.o"
+  }
+]
