@@ -45,6 +45,8 @@ int64_t modularInverse(int64_t x, int64_t p);
 // `DFT[i] = a(rootPowers[i]) = sum_{j=0}^{a.size()-1} (a[j] * rootPowers[i]^j)`.
 std::vector<Coefficient> dft(std::span<const Coefficient> a, int64_t p, std::span<const Coefficient> rootPowers);
 
+std::vector<Coefficient> fastDft(std::span<const Coefficient> a, int64_t p, std::span<const Coefficient> rootPowers);
+
 // Perform a 2-D DFT on the polynomial a in Z_p at the points (xPowers[i], yPowers[j]).
 // That is, return a vector `DFT` of size xPowers.size() * yPowers.size(), where
 // `DFT[i * xPowers.size() + j] = a(xPowers[i], yPowers[j]) = sum_{i=0}^{a.size() / K} sum_{j=0}^{K} a[i * K + j] * xPowers[0]^j * yPowers[0]^i`.

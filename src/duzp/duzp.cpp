@@ -101,6 +101,35 @@ std::vector<Coefficient> dft(std::span<const Coefficient> a, int64_t p, std::spa
     return evaluated;
 }
 
+std::vector<Coefficient> fastDft(std::span<const Coefficient> a, int64_t p, std::span<const Coefficient> rootPowers)
+{
+    // Check that the size of the input polynomial is a power of 2.
+    const int n = a.size();
+    assert(n == 1 || ((n & (n - 1)) == 0));
+
+    auto recurse = [p, &rootPowers](std::span<const Coefficient> a, int basePower, auto& recurse) -> std::vector<Coefficient> {
+        if (a.size() == 1)
+            return {a[0]};
+        const int n = a.size();
+        std::vector<Coefficient> evenCoefficients(n / 2);
+        std::vector<Coefficient> oddCoefficients(n / 2);
+        for (int i = 0; i < n / 2; ++i) {
+            evenCoefficients[i] = (a[i] + a[i + n / 2]) % p;
+            oddCoefficients[i] = (a[i] - a[i + n / 2]) * rootPowers[(i * basePower) % n] % p;
+        }
+        std::vector<Coefficient> evenTransformed = recurse(evenCoefficients, basePower * 2, recurse);
+        std::vector<Coefficient> oddTransformed = recurse(oddCoefficients, basePower * 2, recurse);
+        std::vector<Coefficient> transformed(n);
+        for (int i = 0; i < n / 2; ++i) {
+            transformed[2 * i] = evenTransformed[i];
+            transformed[2 * i + 1] = oddTransformed[i];
+        }
+        return transformed;
+    };
+
+    return recurse(a, 1, recurse);
+}
+
 std::vector<Coefficient> dft2d(std::span<const Coefficient> A, int K, int64_t p, std::span<const Coefficient> xPowers, std::span<const Coefficient> yPowers)
 {
     // We use the row-column algorithm to compute the 2-D DFT.
@@ -118,7 +147,7 @@ std::vector<Coefficient> dft2d(std::span<const Coefficient> A, int K, int64_t p,
     std::vector<Coefficient> evaluatedRows(xPowers.size() * numRows);
     // Perform a 1-D DFT on the rows of the matrix A.
     for (int row = 0; row < numRows; ++row) {
-        auto evaluatedRow = dft(A.subspan(row * numCols, numCols), p, xPowers);
+        auto evaluatedRow = fastDft(A.subspan(row * numCols, numCols), p, xPowers);
         std::copy(evaluatedRow.begin(), evaluatedRow.end(), evaluatedRows.begin() + row * xPowers.size());
     }
 
@@ -128,7 +157,7 @@ std::vector<Coefficient> dft2d(std::span<const Coefficient> A, int K, int64_t p,
         std::vector<Coefficient> column(numRows);
         for (int row = 0; row < numRows; ++row)
             column[row] = evaluatedRows[row * numCols + col];
-        auto transformedColumn = dft(column, p, yPowers);
+        auto transformedColumn = fastDft(column, p, yPowers);
         for (int row = 0; row < yPowers.size(); ++row)
             evaluated[row * numCols + col] = transformedColumn[row];
     }

@@ -1,0 +1,3 @@
+[submodule "src/duzp/tests/googletest"]
+	path = src/duzp/tests/googletest
+	url = https://github.com/google/googletest
