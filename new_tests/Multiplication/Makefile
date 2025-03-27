@@ -5,6 +5,9 @@ SRC=test_PolyMult
 all:
 	nvcc -DLINUXINTEL64 $(SRC).cu -I$(CUMODP_HOME)/include -L $(CUMODP_HOME)/src -lcumodp -lm -o $(SRC).bin
 
+interactive:
+	nvcc -DLINUXINTEL64 interactive_test_PolyMult.cu -g -G -I$(CUMODP_HOME)/include -L $(CUMODP_HOME)/src -lcumodp -lm -o interactive_test_PolyMult.bin
+
 ##################################################
 check: clean
 	nvcc -DLINUXINTEL64 $(SRC).cu -I$(CUMODP_HOME)/include -L $(CUMODP_HOME)/src -lcumodp -o $(SRC).bin

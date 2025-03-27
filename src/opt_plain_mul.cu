@@ -253,7 +253,7 @@ It computes C = A*B over a finite field.
 @n, the degree of A.
 @m, the degree of B. n>=m.
 @Prime, prime number, the characterisitic of the finite field.
-@verify, whether we want to check the result. it is 1 if we want to check the result.
+@verify, whether we want to check the result. it is 1 if we want to check the result. If 1, It outputs the degrees of the input polynomial and the time elapsed in seconds.
 */
 void mulCUDA( sfixn *A,  sfixn *B, sfixn *C, sfixn n, sfixn m, sfixn Prime, sfixn verify)
 {

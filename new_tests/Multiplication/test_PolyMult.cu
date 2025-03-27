@@ -75,9 +75,9 @@ getNpoly (sfixn *F, int numPoints, int p, int verify)
 
 /************************************************/
 void
-printCpoly (sfixn *C, int c)
+printCpoly (sfixn *C, int c, const std::string& output_file)
 {
-	ofstream ofs ("PolyCgpu.dat", ofstream::out);
+	ofstream ofs (output_file, ofstream::out);
 	for (int i = 0; i < c; ++i)
 		ofs << C[i] << " ";
 	ofs.close ();
@@ -130,11 +130,13 @@ main (int argc, char *argv[])
 
 	getMpoly (M, m, p, verify); // getting 1st poly
 	getNpoly (N, n, p, verify); // getting 2nd poly
-
 	mulCUDA (M, N, C, m, n, p, verify);
 
+    printCpoly(C, m + n, "plain_mul.dat");
+
 	// It has a segamentation fault at the end
-	//stockham_poly_mul_host(m+n, D, m-1, M, n-1, N, p);
+	stockham_poly_mul_host(m+n, D, m-1, M, n-1, N, p);
+    printCpoly(D, m + n, "2D stockham.dat");
 
 	/*
 	 int j;
@@ -155,7 +157,7 @@ main (int argc, char *argv[])
 	{
 		cout << "Testing polynomial multiplication with " << n << " " << m << " "
 				<< p << endl;
-		printCpoly (C, m + n - 1);
+		printCpoly (C, m + n - 1, "output.dat");
 		int testI = system ("diff -b PolyC.dat PolyCgpu.dat");
 		if (testI != 0)
 			cout << "ERROR" << endl;
