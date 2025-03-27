@@ -19,10 +19,10 @@ ifeq ($(ARCH), LINUXINTEL64)
 	
 	CFLAGS=-c -O2 -DLINUXINTEL64 -g -I $(CUMODP_HOME)/include -w
 	
-	CUFLAGS=--compiler-options '-fPIC -Wall -Wno-unused-but-set-variable -Wno-comment' -Xptxas -dlcm=cg --cudart shared $(GENCODE_ARCH_COMPUTE) 
+	CUFLAGS=--compiler-options '-fPIC -Wall -Wno-unused-but-set-variable -Wno-comment' -Xptxas -dlcm=cg --cudart shared $(GENCODE_ARCH_COMPUTE) -std=c++14 
 
 	LIBFLAGS= -shared -o 
-	LDFLAGS=-lm -lcudart
+	LDFLAGS=-lm -lcudart -lgmp -lgmpxx
 	CUMODP=cumodp
 endif
 
@@ -96,6 +96,7 @@ endif
 	BigPrimeFieldFFT_4/bigArithmetic_fft_P4.cu\
 	BigPrimeFieldFFT_4/bigArithmetic_aux_P4.cu\
 	BigPrimeFieldFFT_4/bigFFT_reduction_P4.cu\
+	two_convolution_poly_mul.cu\
 	
 ##################################################
 #  Building 
