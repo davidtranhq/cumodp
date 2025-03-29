@@ -1,24 +1,77 @@
 #include <gtest/gtest.h>
 #include "two_convolution_poly_mul.h"
+#include <iostream>
+#include <exception>
 
-TEST(TwoConvolutionPolyMul, FindLargestBitWidthOfCoefficients)
+TEST(TwoConvolutionPolyMul, FindLargestBitWidthOfCoefficientsNaive)
 {
     {
         UnivariateMPZPolynomial a = {1, 2, 3};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients(a, a), 2);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_naive(a, a), 2);
     }
     {
         UnivariateMPZPolynomial a = {0xabcd, 0x1234, 0x5678};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients(a, a), 16);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_naive(a, a), 16);
     }
     {
         UnivariateMPZPolynomial a = {4, 5, 6};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients(a, a), 3);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_naive(a, a), 3);
     }
     {
         UnivariateMPZPolynomial a = {1, 2, 3};
         UnivariateMPZPolynomial b = {4, 5, 6};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients(a, b), 3);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_naive(a, b), 3);
+    }
+}
+
+TEST(TwoConvolutionPolyMul, FindLargestBitWidthOfCoefficientsHost)
+{
+    {
+        UnivariateMPZPolynomial a = {1, 2, 3};
+        UnivariateMPZPolynomial b = {4, 5, 6};
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 3);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 3);
+    }
+    {
+        UnivariateMPZPolynomial a = {0xabcd, 0x1234, 0x5678};
+        UnivariateMPZPolynomial b = {0x9abc, 0xdef0, 0x1234};
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 16);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 16);
+    }
+    {
+        UnivariateMPZPolynomial a = {4, 5, 6};
+        UnivariateMPZPolynomial b = {7, 8, 9};
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 4);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 4);
+    }
+    {
+        UnivariateMPZPolynomial a = {-1, -2, -3};
+        UnivariateMPZPolynomial b = {-4, -5, -6};
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 3);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 3);
+    }
+    {
+        UnivariateMPZPolynomial a = {0};
+        UnivariateMPZPolynomial b = {0};
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 0);
+    }
+    {
+        UnivariateMPZPolynomial a = {1, 2, 3};
+        UnivariateMPZPolynomial b = {0};
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 2);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 2);
+    }
+    {
+        UnivariateMPZPolynomial a = {1, 0};
+        UnivariateMPZPolynomial b = {0xffffffff, 0};
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 32);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 32);
+    }
+    {
+        UnivariateMPZPolynomial a = {mpz_class("ffffffffffffffffffffffffffffffffffffffff", 16), 0};
+        UnivariateMPZPolynomial b = {1, 0};
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 160);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 160);
     }
 }
 

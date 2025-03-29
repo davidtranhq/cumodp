@@ -3,6 +3,7 @@
 #include <gmpxx.h>
 #include <vector>
 #include "types.h"
+#include <thrust/device_vector.h>
 
 using UnivariateMPZPolynomial = std::vector<mpz_class>;
 using BivariateMPZPolynomial = std::vector<sfixn>;
@@ -23,5 +24,8 @@ struct BivariateBase {
     int M;
 };
 
-int find_largest_bit_width_of_coefficients(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b);
+int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b);
+int find_largest_bit_width_of_coefficients_dev(const thrust::device_vector<size_t>& d_mpz_sizes, const thrust::device_vector<mp_limb_t>& d_most_significant_mpz_limbs);
+int find_largest_bit_width_of_coefficients_host(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b);
+
 BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomial& p, const BivariateBase& base, sfixn prime);
