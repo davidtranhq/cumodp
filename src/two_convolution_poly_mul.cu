@@ -213,6 +213,7 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
         size_t current_block_bits = 0;
         sfixn current_block = 0;
         
+        size_t x_power = 0;
         // Iterate through limbs from least significant to most significant
         for (size_t limb_idx = 0; limb_idx < num_limbs; ++limb_idx) {
             mp_limb_t limb {raw_mpz->_mp_d[limb_idx]};
@@ -230,7 +231,7 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
                 
                 // If block is full, process it
                 if (current_block_bits == block_size) {
-                    bi[y_power * base.M + x_power++] = current_block % prime;
+                    bi[y_power * base.K + x_power++] = current_block % prime;
                     current_block = 0;
                     current_block_bits = 0;
                 }
@@ -243,7 +244,7 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
         
         // Handle any remaining bits in an incomplete block
         if (current_block_bits > 0) {
-            bi[y_power * base.M + x_power++] = current_block % prime;
+            bi[y_power * base.K + x_power++] = current_block % prime;
         }
     };
 
