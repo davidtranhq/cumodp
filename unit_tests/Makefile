@@ -24,7 +24,7 @@ LIB_DIRS := \
 
 LDFLAGS += $(addprefix -L, $(LIB_DIRS))
 
-LIB_NAMES := gtest gtest_main cumodp gmp gmpxx
+LIB_NAMES := gtest gtest_main cumodp gmp gmpxx cudart
 LDFLAGS += $(addprefix -l, $(LIB_NAMES))
 
 debug: CXXFLAGS += -g

@@ -3,6 +3,7 @@
 #include <thrust/host_vector.h>
 #include "two_convolution_poly_mul.h"
 #include <thrust/copy.h>
+#include <thrust/scan.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 
@@ -19,16 +20,8 @@ int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial& 
     return largest_bit_width;
 }
 
-#ifndef GMP_LIMB_BITS
-  // Define GMP_LIMB_BITS (32 or 64) as needed.
-  #define GMP_LIMB_BITS 32
-#endif
-
-// Assume mpz_limb_t is defined appropriately.
-typedef unsigned long mpz_limb_t;
-
 // __device__ helper: compute number of bits in the limb
-__device__ __forceinline__ int limb_bit_length(mpz_limb_t limb) {
+__device__ __forceinline__ int limb_bit_length(mp_limb_t limb) {
 #if GMP_LIMB_BITS == 32
     // For 32-bit limbs use __clz
     return limb ? (32 - __clz(limb)) : 0;
@@ -40,7 +33,7 @@ __device__ __forceinline__ int limb_bit_length(mpz_limb_t limb) {
 
 // First kernel: compute per-element bit width and reduce within a block.
 __global__ void reduce_max_bit_width_kernel(const size_t* mpz_sizes,
-                                              const mpz_limb_t* ms_limbs,
+                                              const mp_limb_t* ms_limbs,
                                               int n,
                                               int* partial_max) {
     extern __shared__ int sdata[];
@@ -52,7 +45,7 @@ __global__ void reduce_max_bit_width_kernel(const size_t* mpz_sizes,
     while (idx < n) {
         int bit_width = 0;
         size_t limbs = mpz_sizes[idx];
-        mpz_limb_t limb = ms_limbs[idx];
+        mp_limb_t limb = ms_limbs[idx];
         if (limbs > 0) {
             // If coefficient is nonzero, compute its bit width.
             bit_width = (limbs - 1) * GMP_LIMB_BITS + limb_bit_length(limb);
@@ -64,7 +57,7 @@ __global__ void reduce_max_bit_width_kernel(const size_t* mpz_sizes,
         if (idx2 < n) {
             int bit_width2 = 0;
             size_t limbs2 = mpz_sizes[idx2];
-            mpz_limb_t limb2 = ms_limbs[idx2];
+            mp_limb_t limb2 = ms_limbs[idx2];
             if (limbs2 > 0) {
                 bit_width2 = (limbs2 - 1) * GMP_LIMB_BITS + limb_bit_length(limb2);
             }
@@ -127,10 +120,11 @@ __global__ void reduce_max_kernel(const int* d_in, int n, int* d_out) {
 }
 
 // Host function: launch kernels to perform the complete reduction.
-int find_largest_bit_width_of_coefficients_dev(
-    const thrust::device_vector<size_t>& d_mpz_sizes,
-    const thrust::device_vector<mpz_limb_t>& d_most_significant_mpz_limbs)
+int find_largest_bit_width_of_coefficients_dev(const CoefficientsOnDevice& coeffs)
 {
+    const thrust::device_vector<size_t>& d_mpz_sizes = coeffs.mpz_sizes;
+    const thrust::device_vector<mp_limb_t>& d_most_significant_mpz_limbs = coeffs.most_significant_mpz_limbs;
+
     int n = d_mpz_sizes.size();
     if (n == 0) return 0;
 
@@ -142,7 +136,7 @@ int find_largest_bit_width_of_coefficients_dev(
     // Allocate a device vector for block–level partial maximums.
     thrust::device_vector<int> d_partial_max(blocks);
     const size_t* raw_mpz_sizes = thrust::raw_pointer_cast(d_mpz_sizes.data());
-    const mpz_limb_t* raw_ms_limbs = thrust::raw_pointer_cast(d_most_significant_mpz_limbs.data());
+    const mp_limb_t* raw_ms_limbs = thrust::raw_pointer_cast(d_most_significant_mpz_limbs.data());
     int* raw_partial_max = thrust::raw_pointer_cast(d_partial_max.data());
 
     size_t sharedMemSize = threadsPerBlock * sizeof(int);
@@ -170,7 +164,8 @@ int find_largest_bit_width_of_coefficients_dev(
     return result;
 }
 
-int find_largest_bit_width_of_coefficients_host(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
+
+CoefficientsOnDevice copy_polynomial_data_to_device(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {
     thrust::host_vector<size_t> mpz_sizes(a.size() + b.size());
 
@@ -191,10 +186,11 @@ int find_largest_bit_width_of_coefficients_host(const UnivariateMPZPolynomial& a
         most_significant_mpz_limbs[i] = mpz_sizes[i] ? mpz_limbs[offset - 1] : 0;
     }
 
-    thrust::device_vector<size_t> d_mpz_sizes(mpz_sizes);
-    thrust::device_vector<mp_limb_t> d_mpz_limbs(mpz_limbs);
-    thrust::device_vector<mp_limb_t> d_most_significant_mpz_limbs(most_significant_mpz_limbs);
-    return find_largest_bit_width_of_coefficients_dev(d_mpz_sizes, d_most_significant_mpz_limbs);
+    return CoefficientsOnDevice {
+        thrust::device_vector<size_t>(mpz_sizes),
+        thrust::device_vector<mp_limb_t>(mpz_limbs),
+        thrust::device_vector<mp_limb_t>(most_significant_mpz_limbs)
+    };
 }
 
 
@@ -206,7 +202,6 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
     const int y_terms = p.size();
 
     auto convert_mpz_to_modular_univariate = [&](int y_power) {
-        int x_power = 0;
         mpz_srcptr raw_mpz {p[y_power].get_mpz_t()};
         size_t num_limbs {mpz_size(raw_mpz)};
         
@@ -253,6 +248,94 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
     return bi;
 }
 
+// CUDA kernel: one thread per coefficient.
+__global__
+void convert_kernel(const size_t* __restrict__ d_mpz_sizes,
+                      const mp_limb_t* __restrict__ d_mpz_limbs,
+                      const size_t* __restrict__ d_offsets,
+                      sfixn* __restrict__ d_modular_bivariate,
+                      int num_coeffs, int baseK, int baseM, sfixn prime)
+{
+    int coeff = blockIdx.x * blockDim.x + threadIdx.x;
+    if (coeff >= num_coeffs) return;
+    
+    // Starting offset and size (number of limbs) for this coefficient.
+    size_t offset = d_offsets[coeff];
+    size_t size   = d_mpz_sizes[coeff];
+    
+    // Process each of the base.K blocks.
+    for (int j = 0; j < baseK; j++) {
+        // Compute the bit position of the jth block.
+        int bit_offset = j * baseM;
+        int limb_index = bit_offset / GMP_LIMB_BITS;
+        int bit_in_limb = bit_offset % GMP_LIMB_BITS;
+        
+        // Initialize the block value to zero.
+        mp_limb_t block_val = 0;
+        
+        // If the block's starting limb exists, extract from it.
+        if (limb_index < size) {
+            // Shift the limb so that the desired bits are in the lower part.
+            block_val = d_mpz_limbs[offset + limb_index] >> bit_in_limb;
+            // If the block spans a limb boundary, fetch the extra bits.
+            if ((bit_in_limb + baseM) > GMP_LIMB_BITS && (limb_index + 1) < size) {
+                int bits_from_next = (bit_in_limb + baseM) - GMP_LIMB_BITS;
+                mp_limb_t next_part = d_mpz_limbs[offset + limb_index + 1] 
+                                       & (((mp_limb_t)1 << bits_from_next) - 1);
+                block_val |= next_part << (GMP_LIMB_BITS - bit_in_limb);
+            }
+        }
+        // Mask to keep only baseM bits.
+        mp_limb_t mask = (((mp_limb_t)1) << baseM) - 1;
+        block_val &= mask;
+        
+        // Modular reduction: if the block value is at least prime, subtract prime.
+        if (block_val >= (mp_limb_t)prime)
+            block_val -= prime;
+        
+        // Store the result. The output layout is coefficient-major:
+        // coefficient 0 occupies indices 0..baseK-1, coefficient 1 indices baseK..2*baseK-1, etc.
+        d_modular_bivariate[coeff * baseK + j] = block_val;
+    }
+}
+
+// Host function that wraps the kernel launch.
+thrust::device_vector<sfixn> convert_to_modular_bivariate_dev(
+    const CoefficientsOnDevice& coeffs,
+    const BivariateBase& base,
+    sfixn prime)
+{
+    const thrust::device_vector<size_t>& d_mpz_sizes = coeffs.mpz_sizes;
+    const thrust::device_vector<mp_limb_t>& d_mpz_limbs = coeffs.mpz_limbs;
+
+    int num_coeffs = d_mpz_sizes.size();
+    
+    // Compute per-coefficient offsets using an exclusive scan.
+    thrust::device_vector<size_t> d_offsets(num_coeffs);
+    thrust::exclusive_scan(d_mpz_sizes.begin(), d_mpz_sizes.end(), d_offsets.begin());
+    
+    // Allocate the output vector:
+    // Each coefficient produces base.K blocks.
+    thrust::device_vector<sfixn> d_modular_bivariate(num_coeffs * base.K);
+    
+    // Launch kernel with one thread per coefficient.
+    int threadsPerBlock = 256;
+    int blocks = (num_coeffs + threadsPerBlock - 1) / threadsPerBlock;
+    convert_kernel<<<blocks, threadsPerBlock>>>(
+        thrust::raw_pointer_cast(d_mpz_sizes.data()),
+        thrust::raw_pointer_cast(d_mpz_limbs.data()),
+        thrust::raw_pointer_cast(d_offsets.data()),
+        thrust::raw_pointer_cast(d_modular_bivariate.data()),
+        num_coeffs,
+        base.K,
+        base.M,
+        prime);
+        
+    // Synchronize to ensure kernel completion (and check for errors if desired).
+    cudaDeviceSynchronize();
+    
+    return d_modular_bivariate;
+}
 
 UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {

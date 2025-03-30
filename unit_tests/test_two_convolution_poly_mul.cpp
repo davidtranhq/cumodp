@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include "two_convolution_poly_mul.h"
-#include <iostream>
-#include <exception>
+#include <thrust/host_vector.h>
 
 TEST(TwoConvolutionPolyMul, FindLargestBitWidthOfCoefficientsNaive)
 {
@@ -24,64 +23,61 @@ TEST(TwoConvolutionPolyMul, FindLargestBitWidthOfCoefficientsNaive)
     }
 }
 
-TEST(TwoConvolutionPolyMul, FindLargestBitWidthOfCoefficientsHost)
+TEST(TwoConvolutionPolyMul, FindLargestBitWidthOfCoefficientsDev)
 {
+    auto run_test = [](const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b, int expected_bit_width) {
+        CoefficientsOnDevice coeffs = copy_polynomial_data_to_device(a, b);
+        EXPECT_EQ(find_largest_bit_width_of_coefficients_dev(coeffs), expected_bit_width);
+    };
     {
         UnivariateMPZPolynomial a = {1, 2, 3};
         UnivariateMPZPolynomial b = {4, 5, 6};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 3);
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 3);
+        run_test(a, b, 3);
     }
     {
         UnivariateMPZPolynomial a = {0xabcd, 0x1234, 0x5678};
         UnivariateMPZPolynomial b = {0x9abc, 0xdef0, 0x1234};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 16);
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 16);
+        run_test(a, b, 16);
     }
     {
         UnivariateMPZPolynomial a = {4, 5, 6};
         UnivariateMPZPolynomial b = {7, 8, 9};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 4);
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 4);
+        run_test(a, b, 4);
     }
     {
         UnivariateMPZPolynomial a = {-1, -2, -3};
         UnivariateMPZPolynomial b = {-4, -5, -6};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 3);
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 3);
+        run_test(a, b, 3);
     }
     {
         UnivariateMPZPolynomial a = {0};
         UnivariateMPZPolynomial b = {0};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 0);
+        run_test(a, b, 0);
     }
     {
         UnivariateMPZPolynomial a = {1, 2, 3};
         UnivariateMPZPolynomial b = {0};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 2);
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 2);
+        run_test(a, b, 2);
     }
     {
         UnivariateMPZPolynomial a = {1, 0};
         UnivariateMPZPolynomial b = {0xffffffff, 0};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 32);
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 32);
+        run_test(a, b, 32);
     }
     {
         UnivariateMPZPolynomial a = {mpz_class("ffffffffffffffffffffffffffffffffffffffff", 16), 0};
         UnivariateMPZPolynomial b = {1, 0};
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(a, b), 160);
-        EXPECT_EQ(find_largest_bit_width_of_coefficients_host(b, a), 160);
+        run_test(a, b, 160);
     }
 }
 
-TEST(TwoConvolutionPolyMul, ConvertUnivariateToBivariate)
+TEST(TwoConvolutionPolyMul, ConvertToModularBivariateNaive)
 {
     {
         UnivariateMPZPolynomial a = {1, 2, 3};
         BivariateBase base = {.N = 4, .K = 2, .M = 2};
         EXPECT_EQ(convert_to_modular_bivariate(a, base, 401), BivariateMPZPolynomial({1, 0, 2, 0, 3, 0}));
-    }/*
+    }
     {
         UnivariateMPZPolynomial a = {0xabcd, 0x1234, 0x5678};
         BivariateBase base = {.N = 16, .K = 2, .M = 8};
@@ -91,7 +87,32 @@ TEST(TwoConvolutionPolyMul, ConvertUnivariateToBivariate)
         UnivariateMPZPolynomial a = {4, 5, 6};
         BivariateBase base = {.N = 4, .K = 2, .M = 2};
         EXPECT_EQ(convert_to_modular_bivariate(a, base, 401), BivariateMPZPolynomial({0, 1, 1, 1, 2, 1}));
-    }*/
+    }
+}
+
+TEST(TwoConvolutionPolyMul, ConvertToModularBivariateDev)
+{
+    auto run_test = [](const UnivariateMPZPolynomial& a, const BivariateBase& base, int prime, const std::vector<sfixn>& expected) {
+        CoefficientsOnDevice coeffs = copy_polynomial_data_to_device(a, {});
+        thrust::host_vector<sfixn> result = convert_to_modular_bivariate_dev(coeffs, base, prime);
+        thrust::host_vector<sfixn> expected_result = expected;
+        EXPECT_EQ(result, expected_result);
+    };
+    {
+        UnivariateMPZPolynomial a = {1, 2, 3};
+        BivariateBase base = {.N = 4, .K = 2, .M = 2};
+        run_test(a, base, 401, {1, 0, 2, 0, 3, 0});
+    }
+    {
+        UnivariateMPZPolynomial a = {0xabcd, 0x1234, 0x5678};
+        BivariateBase base = {.N = 16, .K = 2, .M = 8};
+        run_test(a, base, 401, {0xcd, 0xab, 0x34, 0x12, 0x78, 0x56});
+    }
+    {
+        UnivariateMPZPolynomial a = {4, 5, 6};
+        BivariateBase base = {.N = 4, .K = 2, .M = 2};
+        run_test(a, base, 401, {0, 1, 1, 1, 2, 1});
+    }
 }
 
 /*

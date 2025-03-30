@@ -24,8 +24,16 @@ struct BivariateBase {
     int M;
 };
 
-int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b);
-int find_largest_bit_width_of_coefficients_dev(const thrust::device_vector<size_t>& d_mpz_sizes, const thrust::device_vector<mp_limb_t>& d_most_significant_mpz_limbs);
-int find_largest_bit_width_of_coefficients_host(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b);
+struct CoefficientsOnDevice {
+    thrust::device_vector<size_t> mpz_sizes;
+    thrust::device_vector<mp_limb_t> mpz_limbs;
+    thrust::device_vector<mp_limb_t> most_significant_mpz_limbs;
+};
 
-BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomial& p, const BivariateBase& base, sfixn prime);
+CoefficientsOnDevice copy_polynomial_data_to_device(const UnivariateMPZPolynomial &a, const UnivariateMPZPolynomial &b);
+
+int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial &, const UnivariateMPZPolynomial &);
+int find_largest_bit_width_of_coefficients_dev(const CoefficientsOnDevice &);
+
+BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomial&, const BivariateBase&, sfixn prime);
+thrust::device_vector<sfixn> convert_to_modular_bivariate_dev(const CoefficientsOnDevice&, const BivariateBase&, sfixn prime);
