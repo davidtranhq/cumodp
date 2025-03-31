@@ -123,7 +123,6 @@ TEST(TwoConvolutionPolyMul, ScaleXArgumentDev)
         thrust::host_vector<sfixn> result = A_dev;
         return result;
     };
-
     {
         BivariateMPZPolynomial A = {1, 0, 2, 0, 3, 0};
         BivariateBase base = {.N = 4, .K = 2, .M = 2};
@@ -138,6 +137,52 @@ TEST(TwoConvolutionPolyMul, ScaleXArgumentDev)
         sfixn prime = 401;
         EXPECT_EQ(run_test(A, base, theta, prime), (BivariateMPZPolynomial{1, 2, 4, 2, 4, 8, 4, 8, 16}));
     }
+    {
+        BivariateMPZPolynomial A = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+        BivariateBase base = {.N = 6, .K = 3, .M = 2};
+        sfixn theta = 2;
+        sfixn prime = 401;
+        EXPECT_EQ(run_test(A, base, theta, prime), (BivariateMPZPolynomial{1, 4, 12, 4, 10, 24, 7, 16, 36}));
+    }
+}
+
+TEST(TwoConvolutionPolyMul, EvaluateAtXDev)
+{
+    auto run_test = [](const BivariateMPZPolynomial& A, const BivariateBase& base, sfixn beta, sfixn prime) {
+        thrust::device_vector<sfixn> A_dev(A.begin(), A.end());
+        evaluate_at_x_dev(A_dev, base, beta, prime);
+        thrust::host_vector<sfixn> result = A_dev;
+        return result;
+    };
+    {
+        BivariateMPZPolynomial A = {1, 0, 2, 0, 3, 0};
+        BivariateBase base = {.N = 4, .K = 2, .M = 2};
+        sfixn beta = 1;
+        sfixn prime = 401;
+        EXPECT_EQ(run_test(A, base, beta, prime), (BivariateMPZPolynomial{1, 2, 3}));
+    }
+    {
+        BivariateMPZPolynomial A = {1, 1, 1, 2, 2, 2};
+        BivariateBase base = {.N = 6, .K = 3, .M = 2};
+        sfixn beta = 2;
+        sfixn prime = 401;
+        EXPECT_EQ(run_test(A, base, beta, prime), (BivariateMPZPolynomial{7, 14}));
+    }
+    {
+        BivariateMPZPolynomial A = {1, 2, 3};
+        BivariateBase base = {.N = 6, .K = 3, .M = 2};
+        sfixn beta = -1;
+        sfixn prime = 401;
+        EXPECT_EQ(run_test(A, base, beta, prime), (BivariateMPZPolynomial{2}));
+    }
+    {
+        BivariateMPZPolynomial A = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+        BivariateBase base = {.N = 12, .K = 3, .M = 4};
+        sfixn beta = 2;
+        sfixn prime = 401;
+        EXPECT_EQ(run_test(A, base, beta, prime), (BivariateMPZPolynomial{17, 38, 59}));
+    }
+}
 }
 
 /*

@@ -8,6 +8,7 @@
 #include <cuda_runtime.h>
 #include "fft_aux.h"
 #include "list_stockham.h"
+#include "inlines.h"
 
 int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {
@@ -385,6 +386,104 @@ void scale_x_argument_dev(thrust::device_vector<sfixn>& A, const BivariateBase& 
     cudaDeviceSynchronize();
 }
 
+// Device functions for modular arithmetic.
+__device__ __forceinline__ sfixn mod_add(sfixn a, sfixn b, sfixn prime) {
+    sfixn sum = a + b;
+    if (sum >= prime) sum -= prime;
+    return sum;
+}
+
+__device__ __forceinline__ sfixn mod_mul(sfixn a, sfixn b, sfixn prime) {
+    return (a * b) % prime;
+}
+
+// Kernel: Each block processes one row (i.e. a fixed power of y).
+// Threads in the block multiply coefficients by precomputed beta powers,
+// and then perform a parallel reduction using shared memory.
+__global__ void evaluate_kernel(const sfixn* __restrict__ A,
+                                sfixn* __restrict__ result,
+                                const sfixn* __restrict__ beta_powers,
+                                int K,
+                                sfixn prime) {
+    extern __shared__ sfixn sdata[]; // shared memory for reduction
+    int row = blockIdx.x;           // each block handles one row
+    int tid = threadIdx.x;
+    sfixn partial = 0;
+    
+    // Each thread processes a subset of the x-coefficients.
+    for (int j = tid; j < K; j += blockDim.x) {
+        sfixn coeff = A[row * K + j];
+        sfixn beta_j = beta_powers[j];
+        sfixn prod = mod_mul(coeff, beta_j, prime);
+        partial = mod_add(partial, prod, prime);
+    }
+    sdata[tid] = partial;
+    __syncthreads();
+
+    // Parallel reduction in shared memory.
+    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+            sdata[tid] = mod_add(sdata[tid], sdata[tid + s], prime);
+        }
+        __syncthreads();
+    }
+    
+    // The first thread writes the final result for the row.
+    if (tid == 0) {
+        result[row] = sdata[0];
+    }
+}
+
+// Evaluates the bivariate polynomial A at x = beta modulo prime.
+// The polynomial is stored in A with dimensions (base.N x base.K),
+// where A[i * base.K + j] is the coefficient of x^j y^i.
+// After evaluation, A is overwritten with the univariate polynomial in y.
+void evaluate_at_x_dev(thrust::device_vector<sfixn>& A,
+                       const BivariateBase& base,
+                       sfixn beta,
+                       sfixn prime)
+{
+    int K = base.K;
+    int y_degree = A.size() / K;
+
+    // Precompute beta^j mod prime for j = 0, 1, ..., K-1 on the host.
+    thrust::host_vector<sfixn> h_beta_powers(K);
+    h_beta_powers[0] = 1;
+    for (int j = 1; j < K; j++) {
+        h_beta_powers[j] = (h_beta_powers[j - 1] * beta) % prime;
+    }
+    thrust::device_vector<sfixn> beta_powers = h_beta_powers;
+
+    // Allocate a device vector to hold the evaluation results (one per row).
+    thrust::device_vector<sfixn> result(y_degree, 0);
+
+    // Launch the kernel.
+    // One block per row, using a block size (e.g., 256 threads) that can be tuned.
+    int blockSize = 256;
+    int gridSize = y_degree;
+    size_t sharedMemSize = blockSize * sizeof(sfixn);
+    evaluate_kernel<<<gridSize, blockSize, sharedMemSize>>>(
+        thrust::raw_pointer_cast(A.data()),
+        thrust::raw_pointer_cast(result.data()),
+        thrust::raw_pointer_cast(beta_powers.data()),
+        K,
+        prime
+    );
+    cudaDeviceSynchronize(); // Synchronize to check for errors.
+
+    // Overwrite A with the result (a univariate polynomial in y).
+    A = result;
+}
+
+/**
+ * cyclic_convolution and negacyclic_convolution are univariate polynomials in y: that is,
+ * cyclic_convolution[i] is the coefficient of y^i in the first polynomial, and
+ * negacyclic_convolution[i] is the coefficient of y^i in the second polynomial. 
+ * Let u := cyclic_convolution, v := negacyclic_convolution, and N := largest_bit_width_of_coefficients.
+ * Then the below function computes (u + v)/2 + (u - v)/2 * 2^N.
+ * The result is stored in cyclic_convolution.
+ */
+
 thrust::device_vector<sfixn> two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase& base, sfixn prime)
 {
     sfixn product_x_size = base.K;
@@ -410,10 +509,17 @@ thrust::device_vector<sfixn> two_convolution_2d_dev(const thrust::device_vector<
     expand_to_fft2_dev(product_x_num_bits, product_y_num_bits, padded_B_ptr, base.K, B.size() / base.K, B_ptr);
 
     // The output is written to padded_A, so we store a copy of it for when we compute the negacyclic convolution
-    thrust::device_vector<sfixn> negacyclic_convolution(padded_A);
+    thrust::device_vector<sfixn> padded_A_copy(padded_A);
     bi_stockham_poly_mul_dev(padded_product_y_size, product_y_num_bits, padded_product_x_size, product_x_num_bits, padded_A_ptr, padded_B_ptr, prime);
 
+    // theta is a 2Kth primitive root of unity
+    sfixn theta = primitive_root(product_x_num_bits + 1, prime);
+    scale_x_argument_dev(padded_A_copy, base, theta, prime);
+    scale_x_argument_dev(padded_B, base, theta, prime);
 
+    // padded_A_copy will store the result of the negacyclic convolution
+    sfixn* padded_A_copy_ptr = thrust::raw_pointer_cast(padded_A_copy.data());
+    bi_stockham_poly_mul_dev(padded_product_y_size, product_y_num_bits, padded_product_x_size, product_x_num_bits, padded_A_copy_ptr, padded_B_ptr, prime);
 }
 
 UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)

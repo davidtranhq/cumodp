@@ -39,5 +39,6 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
 thrust::device_vector<sfixn> convert_to_modular_bivariate_dev(const CoefficientsOnDevice&, const BivariateBase&, sfixn prime);
 
 void scale_x_argument_dev(thrust::device_vector<sfixn>&, const BivariateBase& base, sfixn theta, sfixn prime);
+void evaluate_at_x_dev(thrust::device_vector<sfixn>&, const BivariateBase&, sfixn beta, sfixn prime);
 
 thrust::device_vector<sfixn> two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase&, sfixn prime);
