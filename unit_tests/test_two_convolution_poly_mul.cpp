@@ -115,6 +115,31 @@ TEST(TwoConvolutionPolyMul, ConvertToModularBivariateDev)
     }
 }
 
+TEST(TwoConvolutionPolyMul, ScaleXArgumentDev)
+{
+    auto run_test = [](const BivariateMPZPolynomial& A, const BivariateBase& base, sfixn theta, sfixn prime) {
+        thrust::device_vector<sfixn> A_dev(A.begin(), A.end());
+        scale_x_argument_dev(A_dev, base, theta, prime);
+        thrust::host_vector<sfixn> result = A_dev;
+        return result;
+    };
+
+    {
+        BivariateMPZPolynomial A = {1, 0, 2, 0, 3, 0};
+        BivariateBase base = {.N = 4, .K = 2, .M = 2};
+        sfixn theta = 400;
+        sfixn prime = 401;
+        EXPECT_EQ(run_test(A, base, theta, prime), (BivariateMPZPolynomial{1, 0, 2, 0, 3, 0}));
+    }
+    {
+        BivariateMPZPolynomial A = {1, 1, 1, 2, 2, 2, 4, 4, 4};
+        BivariateBase base = {.N = 6, .K = 3, .M = 2};
+        sfixn theta = 2;
+        sfixn prime = 401;
+        EXPECT_EQ(run_test(A, base, theta, prime), (BivariateMPZPolynomial{1, 2, 4, 2, 4, 8, 4, 8, 16}));
+    }
+}
+
 /*
 TEST(TwoConvolutionPolyMul, ComputeRecoveryPrime)
 {

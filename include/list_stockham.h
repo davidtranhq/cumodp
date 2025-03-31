@@ -100,4 +100,6 @@ void list_bivariate_stockham_dev(sfixn *X, sfixn q, sfixn em,
 rdr_poly* bi_stockham_poly_mul_host(const rdr_poly &F, 
     const rdr_poly &G, sfixn p);
 
+void bi_stockham_poly_mul_dev(sfixn m, sfixn em, sfixn n, sfixn en, 
+                              sfixn *F, sfixn *G, sfixn p);
 #endif

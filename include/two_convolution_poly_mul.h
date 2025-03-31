@@ -37,3 +37,7 @@ int find_largest_bit_width_of_coefficients_dev(const CoefficientsOnDevice &);
 
 BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomial&, const BivariateBase&, sfixn prime);
 thrust::device_vector<sfixn> convert_to_modular_bivariate_dev(const CoefficientsOnDevice&, const BivariateBase&, sfixn prime);
+
+void scale_x_argument_dev(thrust::device_vector<sfixn>&, const BivariateBase& base, sfixn theta, sfixn prime);
+
+thrust::device_vector<sfixn> two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase&, sfixn prime);

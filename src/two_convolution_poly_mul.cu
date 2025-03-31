@@ -6,6 +6,8 @@
 #include <thrust/scan.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include "fft_aux.h"
+#include "list_stockham.h"
 
 int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {
@@ -335,6 +337,83 @@ thrust::device_vector<sfixn> convert_to_modular_bivariate_dev(
     cudaDeviceSynchronize();
     
     return d_modular_bivariate;
+}
+
+// Kernel: each thread multiplies one coefficient by theta^j mod prime,
+// where j is the x–exponent given by (index % K).
+__global__ void scale_kernel(sfixn* A, size_t num_elements, int K, sfixn prime, const sfixn* theta_powers) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < num_elements) {
+        int j = idx % K; // determine the x–exponent for this coefficient
+        sfixn a = A[idx];
+        sfixn factor = theta_powers[j];
+        A[idx] = (a * factor) % prime;
+    }
+}
+
+// Host function to scale the x argument of the bivariate polynomial.
+void scale_x_argument_dev(thrust::device_vector<sfixn>& A, const BivariateBase& base, sfixn theta, sfixn prime) {
+    int K = base.K;
+    size_t num_elements = A.size();
+
+    // Precompute theta powers on the host.
+    // h_theta_powers[j] = theta^j mod prime for j = 0,...,K-1.
+    thrust::host_vector<sfixn> h_theta_powers(K);
+    sfixn current = 1;
+    for (int j = 0; j < K; ++j) {
+        h_theta_powers[j] = current;
+        current = (current * theta) % prime;
+    }
+
+    // Copy the theta powers to device memory.
+    thrust::device_vector<sfixn> d_theta_powers = h_theta_powers;
+
+    // Set up CUDA kernel execution configuration.
+    int blockSize = 256;
+    int gridSize = (num_elements + blockSize - 1) / blockSize;
+
+    // Launch the kernel.
+    scale_kernel<<<gridSize, blockSize>>>(
+        thrust::raw_pointer_cast(A.data()),
+        num_elements,
+        K,
+        prime,
+        thrust::raw_pointer_cast(d_theta_powers.data())
+    );
+
+    // Wait for GPU to finish before returning.
+    cudaDeviceSynchronize();
+}
+
+thrust::device_vector<sfixn> two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase& base, sfixn prime)
+{
+    sfixn product_x_size = base.K;
+    sfixn product_y_size = A.size() / base.K + B.size() / base.K - 1;
+
+    auto num_bits = [](sfixn x) {
+        return sizeof(sfixn) * 8 - __builtin_clz(x);
+    };
+
+    sfixn product_x_num_bits = num_bits(product_x_size);
+    sfixn product_y_num_bits = num_bits(product_y_size);
+    sfixn padded_product_x_size = 1LL << product_x_num_bits;
+    sfixn padded_product_y_size = 1LL << product_y_num_bits;
+
+    thrust::device_vector<sfixn> padded_A(padded_product_x_size * padded_product_y_size, 0);
+    const sfixn* A_ptr = thrust::raw_pointer_cast(A.data());
+    sfixn* padded_A_ptr = thrust::raw_pointer_cast(padded_A.data());
+    expand_to_fft2_dev(product_x_num_bits, product_y_num_bits, padded_A_ptr, base.K, A.size() / base.K, A_ptr);
+    
+    thrust::device_vector<sfixn> padded_B(padded_product_x_size * padded_product_y_size, 0);
+    const sfixn* B_ptr = thrust::raw_pointer_cast(B.data());
+    sfixn* padded_B_ptr = thrust::raw_pointer_cast(padded_B.data());
+    expand_to_fft2_dev(product_x_num_bits, product_y_num_bits, padded_B_ptr, base.K, B.size() / base.K, B_ptr);
+
+    // The output is written to padded_A, so we store a copy of it for when we compute the negacyclic convolution
+    thrust::device_vector<sfixn> negacyclic_convolution(padded_A);
+    bi_stockham_poly_mul_dev(padded_product_y_size, product_y_num_bits, padded_product_x_size, product_x_num_bits, padded_A_ptr, padded_B_ptr, prime);
+
+
 }
 
 UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
