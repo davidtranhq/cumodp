@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.md": "markdown",
+        "make.config": "makefile",
+        "random": "cpp"
+    }
+}

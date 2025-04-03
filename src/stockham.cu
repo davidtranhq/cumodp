@@ -570,8 +570,8 @@ void stockham_poly_mul_host(sfixn dh, sfixn *H, sfixn df, const sfixn *F,
     sfixn *F_d, *G_d;
 
     if (n < GPU_FFT_UNIVARIATE_MUL_CUTOFF) {
-       // fprintf(stderr, "fft size < %d is not supported by gpu\n", 
-         //   GPU_FFT_UNIVARIATE_MUL_CUTOFF);
+        fprintf(stderr, "fft size < %d is not supported by gpu\n", 
+           GPU_FFT_UNIVARIATE_MUL_CUTOFF);
         return;
     }
 

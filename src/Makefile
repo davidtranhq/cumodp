@@ -15,11 +15,11 @@ ARCH=LINUXINTEL64
 ifeq ($(ARCH), LINUXINTEL64)
 	CC=gcc
 	GXX=g++
-	NVCC=nvcc
+	NVCC=nvcc -std=c++17 --extended-lambda -ccbin /home/dtran253/.local/bin/g++
 	
-	CFLAGS=-c -O2 -DLINUXINTEL64 -g -I $(CUMODP_HOME)/include -w
+	CFLAGS= -c -O0 -DLINUXINTEL64 -g -I$(CUMODP_HOME)/include -w -DDEBUG
 	
-	CUFLAGS=--compiler-options '-fPIC -Wall -Wno-unused-but-set-variable -Wno-comment' -Xptxas -dlcm=cg --cudart shared $(GENCODE_ARCH_COMPUTE) -std=c++14 
+	CUFLAGS=--compiler-options '-fPIC -Wall -Wno-unused-but-set-variable -Wno-comment' -Xptxas -dlcm=cg --cudart shared $(GENCODE_ARCH_COMPUTE)
 
 	LIBFLAGS= -shared -o 
 	LDFLAGS=-lm -lcudart -lgmp -lgmpxx
@@ -97,6 +97,7 @@ endif
 	BigPrimeFieldFFT_4/bigArithmetic_aux_P4.cu\
 	BigPrimeFieldFFT_4/bigFFT_reduction_P4.cu\
 	two_convolution_poly_mul.cu\
+	two_convolution_constants_check.cpp\
 	
 ##################################################
 #  Building 
@@ -104,7 +105,8 @@ endif
 
 ifeq ($(ARCH), LINUXINTEL64) 
 
-OBJECTS=$(SOURCES:.cu=.o)
+OBJECTS := $(SOURCES:.cu=.o)
+OBJECTS := $(OBJECTS:.cpp=.o)
 
 ##################################################
 all: so
@@ -119,6 +121,9 @@ so: $(OBJECTS)
 
 ##################################################
 
+%.o : %.cpp
+	$(GXX) -fPIC --std=c++20 $(CFLAGS) $*.cpp -o $*.o
+
 else
 
 echo "To build for Windows platforms is not supported!"
@@ -132,4 +137,4 @@ clean:
 	rm -f BigPrimeFieldFFT_3/*.o
 	rm -f BigPrimeFieldFFT_4/*.o
 
-####################END OF THE FILE#########################
+####################END OF THE FILE#########################"

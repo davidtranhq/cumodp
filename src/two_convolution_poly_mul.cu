@@ -1,14 +1,21 @@
+#include <cuda.h>
+#include <cuda_runtime.h>
 #include <cassert>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include "two_convolution_poly_mul.h"
 #include <thrust/copy.h>
 #include <thrust/scan.h>
-#include <cuda.h>
-#include <cuda_runtime.h>
 #include "fft_aux.h"
 #include "list_stockham.h"
 #include "inlines.h"
+
+#define TWO_CONV_POLY_MUL_DEBUG 0
+#if TWO_CONV_POLY_MUL_DEBUG
+    #define DEBUG_PRINT(x, ...) fprintf(stderr, x, ##__VA_ARGS__); fflush(stdout);
+#else
+    #define DEBUG_PRINT(x, ...)
+#endif
 
 int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {
@@ -122,6 +129,17 @@ __global__ void reduce_max_kernel(const int* d_in, int n, int* d_out) {
         d_out[blockIdx.x] = sdata[0];
 }
 
+constexpr BivariateBase determine_bivariate_base(sfixn largest_bit_width)
+{
+    using TwoConvolutionConstants::base_table;
+
+    for (size_t i = 0; i < base_table.size(); ++i) {
+        if (largest_bit_width <= base_table[i].N && base_table[i].K >= 32)
+            return base_table[i];
+    }
+    assert(false && "No suitable base found, the largest bit width exceeds the maximum base size");
+}
+
 // Host function: launch kernels to perform the complete reduction.
 int find_largest_bit_width_of_coefficients_dev(const CoefficientsOnDevice& coeffs)
 {
@@ -199,55 +217,124 @@ CoefficientsOnDevice copy_polynomial_data_to_device(const UnivariateMPZPolynomia
 
 BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomial& p, const BivariateBase& base, sfixn prime)
 {
+    DEBUG_PRINT("convert_to_modular_bivariate(%d (polynomial size), %d (base.K), %d (base.M), %d (prime))\n", p.size(), base.K, base.M, prime);
     assert(base.K * base.M == base.N);
     BivariateMPZPolynomial bi(p.size() * base.K);
     const int block_size {base.M};
     const int y_terms = p.size();
 
     auto convert_mpz_to_modular_univariate = [&](int y_power) {
-        mpz_srcptr raw_mpz {p[y_power].get_mpz_t()};
-        size_t num_limbs {mpz_size(raw_mpz)};
-        
-        size_t current_block_bits = 0;
-        sfixn current_block = 0;
-        
-        size_t x_power = 0;
-        // Iterate through limbs from least significant to most significant
-        for (size_t limb_idx = 0; limb_idx < num_limbs; ++limb_idx) {
-            mp_limb_t limb {raw_mpz->_mp_d[limb_idx]};
-            
-            // Process the current limb
-            size_t bits_remaining {GMP_NUMB_BITS};
-            while (x_power < base.K) {
-                // Determine how many bits to take
-                size_t bits_to_take = std::min(block_size - current_block_bits, bits_remaining);
-                
-                // Extract bits and add to current block
-                sfixn extracted_bits {limb & ((1UL << bits_to_take) - 1)};
-                current_block |= (extracted_bits << current_block_bits);
-                current_block_bits += bits_to_take;
-                
-                // If block is full, process it
-                if (current_block_bits == block_size) {
-                    bi[y_power * base.K + x_power++] = current_block % prime;
-                    current_block = 0;
-                    current_block_bits = 0;
+        bool isNeg = 0;
+        mpz_t coef {*p[y_power].get_mpz_t()};
+	    int s = coef->_mp_size; //abs(s)>=1
+        if (s < 0) {
+            isNeg = 1;
+            s = -s;
+        } else if (s == 0) {
+            return; // skip zero coefficients
+        }
+
+        mp_ptr limbs = coef->_mp_d;
+        mp_limb_t carry = 0;
+        mp_size_t carry_size = 0;
+
+        // all the limbs except for the last one are full-size (64 bits)
+        int idx = y_power * base.K;
+        for (int i = 0; i < s-1; ++i) {
+            mp_limb_t w = limbs[i], q;
+            size_t k = 0; // current position in w
+            if (!carry_size) {
+                while (GMP_LIMB_BITS - k >= base.M) {
+                    q = w >> base.M;
+                    bi[idx] = (sfixn) ((w) ^ (q << base.M));
+                    if (isNeg) {
+                        bi[idx] = -bi[idx];
+                        bi[idx] = bi[idx] + prime;
+                    }
+                    idx++;
+                    w = q;
+                    k += base.M;
                 }
-                
-                // Shift limb and update remaining bits
-                limb >>= bits_to_take;
-                bits_remaining -= bits_to_take;
+            }
+            else {
+                size_t l = base.M - carry_size;
+                while (GMP_LIMB_BITS - k >= l) {
+                    q = w >> l;
+                    bi[idx] = (sfixn) ((((w) ^ (q << l)) << carry_size) + carry); //w % 2^a + carry
+                    if (isNeg) {
+                        bi[idx] = -bi[idx];
+                        bi[idx] = bi[idx] + prime;
+                    }
+                    w = q;
+                    idx++;
+                    k += l;
+
+                    l = base.M;
+                    carry_size = 0;
+                    carry = 0;
+                }
+            }
+            carry_size = GMP_LIMB_BITS - k;
+            carry = w;
+        }
+
+        // last limb, its bit size may be smaller than long
+        mp_limb_t w = limbs[s-1];
+        size_t b = log2(w)+1; // num of bits
+        size_t k = 0; // current position in w
+
+        if (!carry_size) {
+            while (b - k >= base.M) {
+                mp_limb_t q = w >> base.M;
+                bi[idx] = (sfixn) ((w) ^ (q << base.M));
+                if (isNeg) {
+                    bi[idx] = -bi[idx];
+                    bi[idx] = bi[idx] + prime;
+                }
+                idx++;
+                w = q;
+                k += base.M;
+            }
+            if (w) {
+                bi[idx] = (sfixn) w;
+                if (isNeg) {
+                    bi[idx] = -bi[idx];
+                    bi[idx] = bi[idx] + prime;
+                }
             }
         }
-        
-        // Handle any remaining bits in an incomplete block
-        if (current_block_bits > 0) {
-            bi[y_power * base.K + x_power++] = current_block % prime;
+        else {
+            size_t l = base.M - carry_size;
+            while (b - k >= l) {
+                mp_limb_t q = w >> l; //quotient = w / 2^a
+                bi[idx] = (sfixn) ((((w) ^ (q << l)) << carry_size) + carry); //w % 2^a + carry
+                if (isNeg) {
+                    bi[idx] = -bi[idx];
+                    bi[idx] = bi[idx] + prime;
+                }
+                w = q;
+                k += l;
+                idx++;
+
+                l = base.M;
+                carry_size = 0;
+                carry = 0;
+            }
+            if (w) {
+                bi[idx] = (sfixn) ((w << carry_size) + carry);
+                if (isNeg) {
+                    bi[idx] = -bi[idx];
+                    bi[idx] = bi[idx] + prime;
+                }
+            }
         }
     };
 
     for (int y_power = 0; y_power < y_terms; ++y_power)
         convert_mpz_to_modular_univariate(y_power);
+    
+    DEBUG_PRINT("Converted to modular bivariate polynomial:\n");
+    DEBUG_PRINT("\tbi: "); for (auto x : bi) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
     return bi;
 }
 
@@ -348,22 +435,21 @@ __global__ void scale_kernel(sfixn* A, size_t num_elements, int K, sfixn prime, 
         int j = idx % K; // determine the x–exponent for this coefficient
         sfixn a = A[idx];
         sfixn factor = theta_powers[j];
-        A[idx] = (a * factor) % prime;
+        A[idx] = ((longfixnum)a * factor) % prime;
     }
 }
 
 // Host function to scale the x argument of the bivariate polynomial.
-void scale_x_argument_dev(thrust::device_vector<sfixn>& A, const BivariateBase& base, sfixn theta, sfixn prime) {
-    int K = base.K;
+void scale_x_argument_dev(thrust::device_vector<sfixn>& A, sfixn size, sfixn theta, sfixn prime) {
     size_t num_elements = A.size();
 
     // Precompute theta powers on the host.
     // h_theta_powers[j] = theta^j mod prime for j = 0,...,K-1.
-    thrust::host_vector<sfixn> h_theta_powers(K);
+    thrust::host_vector<sfixn> h_theta_powers(size);
     sfixn current = 1;
-    for (int j = 0; j < K; ++j) {
+    for (int j = 0; j < size; ++j) {
         h_theta_powers[j] = current;
-        current = (current * theta) % prime;
+        current = ((longfixnum)current * theta) % prime;
     }
 
     // Copy the theta powers to device memory.
@@ -377,7 +463,7 @@ void scale_x_argument_dev(thrust::device_vector<sfixn>& A, const BivariateBase& 
     scale_kernel<<<gridSize, blockSize>>>(
         thrust::raw_pointer_cast(A.data()),
         num_elements,
-        K,
+        size,
         prime,
         thrust::raw_pointer_cast(d_theta_powers.data())
     );
@@ -386,172 +472,535 @@ void scale_x_argument_dev(thrust::device_vector<sfixn>& A, const BivariateBase& 
     cudaDeviceSynchronize();
 }
 
-// Device functions for modular arithmetic.
-__device__ __forceinline__ sfixn mod_add(sfixn a, sfixn b, sfixn prime) {
-    sfixn sum = a + b;
-    if (sum >= prime) sum -= prime;
-    return sum;
-}
-
-__device__ __forceinline__ sfixn mod_mul(sfixn a, sfixn b, sfixn prime) {
-    return (a * b) % prime;
-}
-
-// Kernel: Each block processes one row (i.e. a fixed power of y).
-// Threads in the block multiply coefficients by precomputed beta powers,
-// and then perform a parallel reduction using shared memory.
-__global__ void evaluate_kernel(const sfixn* __restrict__ A,
-                                sfixn* __restrict__ result,
-                                const sfixn* __restrict__ beta_powers,
-                                int K,
-                                sfixn prime) {
-    extern __shared__ sfixn sdata[]; // shared memory for reduction
-    int row = blockIdx.x;           // each block handles one row
-    int tid = threadIdx.x;
-    sfixn partial = 0;
-    
-    // Each thread processes a subset of the x-coefficients.
-    for (int j = tid; j < K; j += blockDim.x) {
-        sfixn coeff = A[row * K + j];
-        sfixn beta_j = beta_powers[j];
-        sfixn prod = mod_mul(coeff, beta_j, prime);
-        partial = mod_add(partial, prod, prime);
-    }
-    sdata[tid] = partial;
-    __syncthreads();
-
-    // Parallel reduction in shared memory.
-    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
-        if (tid < s) {
-            sdata[tid] = mod_add(sdata[tid], sdata[tid + s], prime);
-        }
-        __syncthreads();
-    }
-    
-    // The first thread writes the final result for the row.
-    if (tid == 0) {
-        result[row] = sdata[0];
-    }
-}
-
-// Evaluates the bivariate polynomial A at x = beta modulo prime.
-// The polynomial is stored in A with dimensions (base.N x base.K),
-// where A[i * base.K + j] is the coefficient of x^j y^i.
-// After evaluation, A is overwritten with the univariate polynomial in y.
-void evaluate_at_x_dev(thrust::device_vector<sfixn>& A,
-                       const BivariateBase& base,
-                       sfixn beta,
-                       sfixn prime)
+struct ModularSumAndDifferenceResult {
+    thrust::device_vector<sfixn> modular_sum;
+    thrust::device_vector<sfixn> modular_difference;
+};
+ModularSumAndDifferenceResult modular_sum_and_difference_dev(const thrust::device_vector<sfixn>& u,
+                                                            const thrust::device_vector<sfixn>& v,
+                                                            sfixn prime)
 {
-    int K = base.K;
-    int y_degree = A.size() / K;
+    DEBUG_PRINT("modular_sum_and_difference_dev(%d, %d, %d)\n", u.size(), v.size(), prime);
+    assert(u.size() == v.size());
+    thrust::device_vector<sfixn> modular_sum(u.size());
+    thrust::transform(u.begin(), u.end(),
+                      v.begin(),
+                      modular_sum.begin(),
+                      [prime] __device__ (sfixn a, sfixn b) -> sfixn {
+                          sfixn sum = a + b;
+                          return (sum >= prime) ? sum - prime : sum;
+                      });
 
-    // Precompute beta^j mod prime for j = 0, 1, ..., K-1 on the host.
-    thrust::host_vector<sfixn> h_beta_powers(K);
-    h_beta_powers[0] = 1;
-    for (int j = 1; j < K; j++) {
-        h_beta_powers[j] = (h_beta_powers[j - 1] * beta) % prime;
-    }
-    thrust::device_vector<sfixn> beta_powers = h_beta_powers;
+    DEBUG_PRINT("\tmodular_sum: "); for (sfixn x : modular_sum) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+    
+    thrust::device_vector<sfixn> modular_difference(u.size());
+    thrust::transform(u.begin(), u.end(),
+                      v.begin(),
+                      modular_difference.begin(),
+                      [prime] __device__ (sfixn a, sfixn b) -> sfixn {
+                          sfixn diff = a - b;
+                          return (diff < 0) ? diff + prime : diff;
+                      });
 
-    // Allocate a device vector to hold the evaluation results (one per row).
-    thrust::device_vector<sfixn> result(y_degree, 0);
-
-    // Launch the kernel.
-    // One block per row, using a block size (e.g., 256 threads) that can be tuned.
-    int blockSize = 256;
-    int gridSize = y_degree;
-    size_t sharedMemSize = blockSize * sizeof(sfixn);
-    evaluate_kernel<<<gridSize, blockSize, sharedMemSize>>>(
-        thrust::raw_pointer_cast(A.data()),
-        thrust::raw_pointer_cast(result.data()),
-        thrust::raw_pointer_cast(beta_powers.data()),
-        K,
-        prime
-    );
-    cudaDeviceSynchronize(); // Synchronize to check for errors.
-
-    // Overwrite A with the result (a univariate polynomial in y).
-    A = result;
+    DEBUG_PRINT("\tmodular_difference: "); for (sfixn x : modular_difference) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+    return {
+        .modular_sum = std::move(modular_sum),
+        .modular_difference = std::move(modular_difference)
+    };
 }
+
+/*
+// From https://github.com/orcca-uwo/BPAS/blob/7a7ce86819eba3f21098b6cc71a9762ca443d871/include/FFT/src/modpn_hfiles/inlineFuncs.h#L1614
+static inline sfixn MontMulModSpe_OPT3_AS_GENE_globalfunc(sfixn a, sfixn b, sfixn inv, sfixn prime)
+{
+    static constexpr int montgomery_base_power = 30;
+    static_assert(TwoConvolutionConstants::prime1 >> montgomery_base_power, "Montgomery base must be less than prime1");
+    static_assert(TwoConvolutionConstants::prime2 >> montgomery_base_power, "Montgomery base must be less than prime2");
+
+    asm("mulq %2\n\t"
+        "movq %%rax,%%rsi\n\t"
+        "movq %%rdx,%%rdi\n\t"
+        "imulq %3,%%rax\n\t"
+        "mulq %4\n\t"
+        "add %%rsi,%%rax\n\t"
+        "adc %%rdi,%%rdx\n\t"
+        "subq %4,%%rdx\n\t"
+        "mov %%rdx,%%rax\n\t"
+        "sar %%cl,%%rax\n\t"
+        "andq %4,%%rax\n\t"
+        "addq %%rax,%%rdx\n\t"
+        : "=d"(a)
+        : "a"(a), "rm"(b), "rm"(inv), "rm"(prime), "c"(montgomery_base_power)
+        : "rsi", "rdi");
+    return a;
+}
+*/
+
+/*
+// From https://github.com/orcca-uwo/BPAS/blob/7a7ce86819eba3f21098b6cc71a9762ca443d871/src/IntegerPolynomial/Multiplication/MulSSA-64_bit_arithmetic.cpp#L384
+void reconstruct_mpz_with_crt(mpz_t zp, sfixn *a, sfixn *b, int size, size_t limb_bits)
+{
+
+    mpz_t zn;
+    mpz_init2(zp, limb_bits);
+    mpz_init2(zn, limb_bits);
+
+    int idx = 0;
+    unsigned __int128 postainer[2] = {0}, negtainer[2] = {0};
+    sfixn shifter = 0;
+    for (int i = 0; i < size; ++i)
+    {
+        // sfixn diff =(a[i] - b[i]);
+        // elem = elem * P2 + b[i];
+        sfixn diff = (a[i] - b[i]);
+        if (diff < 0)
+        {
+            diff += TwoConvolutionConstants::prime1;
+        }
+        __int128 elem = MontMulModSpe_OPT3_AS_GENE_globalfunc(diff, TwoConvolutionConstants::u2_r1_sft, TwoConvolutionConstants::inverse_prime1, TwoConvolutionConstants::prime1);
+        elem = elem * TwoConvolutionConstants::prime2 + b[i];
+        if (elem > TwoConvolutionConsants::half_prime1_prime2)
+        {
+            elem -= TwoConvolutionConstants::prime1_prime2
+        }
+        else if (elem < TwoConvolutionConsants::neg_half_prime1_prime2)
+        {
+            elem += TwoConvolutionConstants::prime1_prime2;
+        }
+
+        if (elem < 0)
+        {
+            elem = -elem;
+            unsigned __int128 tmp = elem << shifter;
+            negtainer[0] += tmp;
+            bool carry = negtainer[0] < tmp;
+            if (shifter)
+                tmp = elem >> (128 - shifter);
+            else
+            {
+                tmp = 0;
+            }
+            negtainer[1] += tmp + carry;
+        }
+        else if (elem > 0)
+        {
+            unsigned __int128 tmp = elem << shifter;
+            postainer[0] += tmp;
+            bool carry = postainer[0] < tmp;
+            if (shifter)
+                tmp = elem >> (128 - shifter);
+            else
+            {
+                tmp = 0;
+            }
+            postainer[1] += tmp + carry;
+        }
+        shifter += M;
+
+        if (shifter >= 128)
+        {
+            if (postainer[0] > 0)
+            {
+                zp->_mp_d[idx] = (mp_limb_t)postainer[0];
+                zp->_mp_d[idx + 1] = (mp_limb_t)(postainer[0] >> GMP_LIMB_BITS);
+                zp->_mp_size = idx + 2;
+            }
+            else
+            {
+                zp->_mp_d[idx] = 0;
+                zp->_mp_d[idx + 1] = 0;
+            }
+            postainer[0] = postainer[1];
+            postainer[1] = 0;
+
+            if (negtainer[0] > 0)
+            {
+                zn->_mp_d[idx] = (mp_limb_t)negtainer[0];
+                zn->_mp_d[idx + 1] = (mp_limb_t)(negtainer[0] >> GMP_LIMB_BITS);
+                zn->_mp_size = idx + 2;
+            }
+            else
+            {
+                zn->_mp_d[idx] = 0;
+                zn->_mp_d[idx + 1] = 0;
+            }
+            negtainer[0] = negtainer[1];
+            negtainer[1] = 0;
+
+            shifter -= 128;
+            idx += 2;
+        }
+    }
+
+    if (postainer[0] > 0)
+    {
+        zp->_mp_d[idx] = (mp_limb_t)postainer[0];
+        zp->_mp_d[idx + 1] = (mp_limb_t)(postainer[0] >> GMP_LIMB_BITS);
+        zp->_mp_size = idx + 2;
+    }
+    if (negtainer[0] > 0)
+    {
+        zn->_mp_d[idx] = (mp_limb_t)negtainer[0];
+        zn->_mp_d[idx + 1] = (mp_limb_t)(negtainer[0] >> GMP_LIMB_BITS);
+        zn->_mp_size = idx + 2;
+    }
+    idx += 2;
+    if (postainer[1] > 0)
+    {
+        zp->_mp_d[idx] = (mp_limb_t)postainer[1];
+        zp->_mp_d[idx + 1] = (mp_limb_t)(postainer[1] >> GMP_LIMB_BITS);
+        zp->_mp_size = idx + 2;
+    }
+    if (negtainer[1] > 0)
+    {
+        zn->_mp_d[idx] = (mp_limb_t)negtainer[1];
+        zn->_mp_d[idx + 1] = (mp_limb_t)(negtainer[1] >> GMP_LIMB_BITS);
+        zn->_mp_size = idx + 2;
+    }
+
+    if (zp->_mp_size && !zp->_mp_d[zp->_mp_size - 1])
+        zp->_mp_size--;
+    if (zn->_mp_size && !zn->_mp_d[zn->_mp_size - 1])
+        zn->_mp_size--;
+
+    if (zn > 0)
+    {
+        mpz_sub(zp, zp, zn);
+    }
+    mpz_clear(zn);
+}
+*/
 
 /**
- * cyclic_convolution and negacyclic_convolution are univariate polynomials in y: that is,
- * cyclic_convolution[i] is the coefficient of y^i in the first polynomial, and
- * negacyclic_convolution[i] is the coefficient of y^i in the second polynomial. 
- * Let u := cyclic_convolution, v := negacyclic_convolution, and N := largest_bit_width_of_coefficients.
- * Then the below function computes (u + v)/2 + (u - v)/2 * 2^N.
- * The result is stored in cyclic_convolution.
- */
-
-thrust::device_vector<sfixn> two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase& base, sfixn prime)
+ * Convert from CRT representation to a mpz_t object
+ *
+ * Output:
+ * @zp: Big integer
+ *
+ * Input:
+ * @a: An array mod prime1: a[0] + a[1] * 2^M + ...
+ * @b: An array mod prime2: b[0] + b[1] * 2^M + ...
+ * @c: An array mod prime3: c[0] + c[1] * 2^M + ...
+ * @size: Size of each array
+ **/
+void reconstruct_mpz_with_crt(mpz_t zp, const sfixn* a, const sfixn* b, const sfixn* c, const BivariateBase& base, int limb_bits)
 {
+    using namespace TwoConvolutionConstants;
+	mpz_t zn;
+	mpz_init2(zp, limb_bits);
+	mpz_init2(zn, limb_bits);
+    int size = base.K;
+
+	int idx = 0;
+	unsigned __int128 postainer[2] = {0}, negtainer[2] = {0};
+	sfixn shifter = 0;
+	for (int i = 0; i < size; ++i) {
+		__int128 elem = (__int128) (((long int) a[i] * U23) % prime1) * P2_P3
+				+ (__int128) (((long int) b[i] * U31) % prime2) * P3_P1
+				+ (__int128) (((long int) c[i] * U12) % prime3) * P1_P2;
+		if (elem > HALF_P1_P2_P3) { elem -= P1_P2_P3; }
+		else if (elem < N_HALF_P1_P2_P3) { elem += P1_P2_P3; }
+
+		if (elem < 0) {
+			elem = -elem;
+			unsigned __int128 tmp = elem << shifter;
+			negtainer[0] += tmp;
+			bool carry = negtainer[0] < tmp;
+			if (shifter)
+				tmp = elem >> (128 - shifter);
+			else { tmp = 0; }
+			negtainer[1] += tmp + carry;
+		}
+		else if (elem > 0) {
+			unsigned __int128 tmp = elem << shifter;
+			postainer[0] += tmp;
+			bool carry = postainer[0] < tmp;
+			if (shifter)
+				tmp = elem >> (128 - shifter);
+			else { tmp = 0; }
+			postainer[1] += tmp + carry;
+		}
+		shifter += base.M;
+
+		if (shifter >= 128) {
+			if (postainer[0] > 0) {
+				zp->_mp_d[idx] = (mp_limb_t) postainer[0];
+				zp->_mp_d[idx+1] = (mp_limb_t) (postainer[0] >> GMP_LIMB_BITS);
+				zp->_mp_size = idx + 2;
+			}
+			else { zp->_mp_d[idx] = 0; zp->_mp_d[idx+1] = 0; }
+			postainer[0] = postainer[1];
+			postainer[1] = 0;
+
+			if (negtainer[0] > 0) {
+				zn->_mp_d[idx] = (mp_limb_t) negtainer[0];
+				zn->_mp_d[idx+1] = (mp_limb_t) (negtainer[0] >> GMP_LIMB_BITS);
+				zn->_mp_size = idx + 2;
+			}
+			else { zn->_mp_d[idx] = 0; zn->_mp_d[idx+1] = 0; }
+			negtainer[0] = negtainer[1];
+			negtainer[1] = 0;
+
+			shifter -= 128;
+			idx += 2;
+		}
+	}
+
+	if (postainer[0] > 0) {
+		zp->_mp_d[idx] = (mp_limb_t) postainer[0];
+		zp->_mp_d[idx+1] = (mp_limb_t) (postainer[0] >> GMP_LIMB_BITS);
+		zp->_mp_size = idx + 2;
+	}
+	if (negtainer[0] > 0) {
+		zn->_mp_d[idx] = (mp_limb_t) negtainer[0];
+		zn->_mp_d[idx+1] = (mp_limb_t) (negtainer[0] >> GMP_LIMB_BITS);
+		zn->_mp_size = idx + 2;
+	}
+	idx += 2;
+	if (postainer[1] > 0) {
+		zp->_mp_d[idx] = (mp_limb_t) postainer[1];
+		zp->_mp_d[idx+1] = (mp_limb_t) (postainer[1] >> GMP_LIMB_BITS);
+		zp->_mp_size = idx + 2;
+	}
+	if (negtainer[1] > 0) {
+		zn->_mp_d[idx] = (mp_limb_t) negtainer[1];
+		zn->_mp_d[idx+1] = (mp_limb_t) (negtainer[1] >> GMP_LIMB_BITS);
+		zn->_mp_size = idx + 2;
+	}
+
+	if (zp->_mp_size && !zp->_mp_d[zp->_mp_size-1])
+		zp->_mp_size--;
+	if (zn->_mp_size && !zn->_mp_d[zn->_mp_size-1])
+		zn->_mp_size--;
+
+	if (mpz_cmp_ui(zn, 0) > 0) { mpz_sub (zp, zp, zn); }
+	mpz_clear(zn);
+}
+
+
+UnivariateMPZPolynomial recover_product_dev(
+    const thrust::device_vector<sfixn>& sum1,
+    const thrust::device_vector<sfixn>& sum2,
+    const thrust::device_vector<sfixn>& sum3,
+    const thrust::device_vector<sfixn>& diff1,
+    const thrust::device_vector<sfixn>& diff2,
+    const thrust::device_vector<sfixn>& diff3,
+    const BivariateBase& base,
+    int limb_bits)
+{
+    DEBUG_PRINT("Recovering Product from CRT representation...\n");
+    assert(sum1.size() == sum2.size());
+    assert(diff1.size() == diff2.size());
+    assert(sum1.size() == diff1.size());
+    UnivariateMPZPolynomial product(sum1.size() / base.K);
+    for (size_t i = 0; i < product.size(); ++i) {
+        // Offset into the bivariate polynomial pointing to the start of y^i
+        size_t offset = i * base.K;
+        mpz_t uv_sum, uv_diff;
+
+        reconstruct_mpz_with_crt(
+            uv_sum,
+            thrust::raw_pointer_cast(sum1.data() + offset),
+            thrust::raw_pointer_cast(sum2.data() + offset),
+            thrust::raw_pointer_cast(sum3.data() + offset),
+            base,
+            limb_bits);
+        reconstruct_mpz_with_crt(
+            uv_diff,
+            thrust::raw_pointer_cast(diff1.data() + offset),
+            thrust::raw_pointer_cast(diff2.data() + offset),
+            thrust::raw_pointer_cast(diff3.data() + offset),
+            base,
+            limb_bits);
+        mpz_mul_2exp(uv_diff, uv_diff, base.N);
+        mpz_add(product[i].get_mpz_t(), uv_sum, uv_diff);
+        product[i] >>= 1;
+        mpz_clear(uv_sum);
+        mpz_clear(uv_diff);
+    }
+    DEBUG_PRINT("Product recovered:\n");
+    DEBUG_PRINT("\tproduct: "); for (auto x : product) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+    return product;
+}
+
+// Rewrite the above function but using host_vectors instead of device_vectors
+UnivariateMPZPolynomial recover_product_host(
+    const thrust::host_vector<sfixn>& sum1,
+    const thrust::host_vector<sfixn>& sum2,
+    const thrust::host_vector<sfixn>& sum3,
+    const thrust::host_vector<sfixn>& diff1,
+    const thrust::host_vector<sfixn>& diff2,
+    const thrust::host_vector<sfixn>& diff3,
+    const BivariateBase& base,
+    int limb_bits)
+{
+    DEBUG_PRINT("Recovering Product from CRT representation...\n");
+    assert(sum1.size() == sum2.size());
+    assert(diff1.size() == diff2.size());
+    assert(sum1.size() == diff1.size());
+    UnivariateMPZPolynomial product(sum1.size() / base.K);
+    for (size_t i = 0; i < product.size(); ++i) {
+        // Offset into the bivariate polynomial pointing to the start of y^i
+        size_t offset = i * base.K;
+        mpz_t uv_sum, uv_diff;
+
+        reconstruct_mpz_with_crt(
+            uv_sum,
+            thrust::raw_pointer_cast(sum1.data() + offset),
+            thrust::raw_pointer_cast(sum2.data() + offset),
+            thrust::raw_pointer_cast(sum3.data() + offset),
+            base,
+            limb_bits);
+        reconstruct_mpz_with_crt(
+            uv_diff,
+            thrust::raw_pointer_cast(diff1.data() + offset),
+            thrust::raw_pointer_cast(diff2.data() + offset),
+            thrust::raw_pointer_cast(diff3.data() + offset),
+            base,
+            limb_bits);
+        mpz_mul_2exp(uv_diff, uv_diff, base.N);
+        mpz_add(product[i].get_mpz_t(), uv_sum, uv_diff);
+        product[i] >>= 1;
+        mpz_clear(uv_sum);
+        mpz_clear(uv_diff);
+    }
+    DEBUG_PRINT("Product recovered:\n");
+    DEBUG_PRINT("\tproduct: "); for (auto x : product) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+    return product;
+}
+
+
+
+
+TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase& base, sfixn prime)
+{
+    DEBUG_PRINT("Performing 2D convolution with base %d (K), %d (M), %d (N) and prime %d...\n", base.K, base.M, base.N, prime);
+
     sfixn product_x_size = base.K;
     sfixn product_y_size = A.size() / base.K + B.size() / base.K - 1;
 
-    auto num_bits = [](sfixn x) {
+    // assert product_x_size is a power of 2
+
+    auto num_bits = [](sfixn x) -> sfixn {
         return sizeof(sfixn) * 8 - __builtin_clz(x);
     };
 
-    sfixn product_x_num_bits = num_bits(product_x_size);
-    sfixn product_y_num_bits = num_bits(product_y_size);
-    sfixn padded_product_x_size = 1LL << product_x_num_bits;
-    sfixn padded_product_y_size = 1LL << product_y_num_bits;
+    auto is_power_of_two = [](sfixn x) { return (x & (x - 1)) == 0; };
 
-    thrust::device_vector<sfixn> padded_A(padded_product_x_size * padded_product_y_size, 0);
-    const sfixn* A_ptr = thrust::raw_pointer_cast(A.data());
-    sfixn* padded_A_ptr = thrust::raw_pointer_cast(padded_A.data());
-    expand_to_fft2_dev(product_x_num_bits, product_y_num_bits, padded_A_ptr, base.K, A.size() / base.K, A_ptr);
-    
-    thrust::device_vector<sfixn> padded_B(padded_product_x_size * padded_product_y_size, 0);
-    const sfixn* B_ptr = thrust::raw_pointer_cast(B.data());
-    sfixn* padded_B_ptr = thrust::raw_pointer_cast(padded_B.data());
-    expand_to_fft2_dev(product_x_num_bits, product_y_num_bits, padded_B_ptr, base.K, B.size() / base.K, B_ptr);
+    sfixn log_padded_product_x_size = num_bits(base.K) - 1;
+    sfixn log_padded_product_y_size = num_bits(product_y_size) - (is_power_of_two(product_y_size) ? 1 : 0);
+
+    log_padded_product_x_size = std::max(log_padded_product_x_size, log_padded_product_y_size);
+    log_padded_product_y_size = std::max(log_padded_product_x_size, log_padded_product_y_size);
+
+    sfixn padded_product_x_size = 1 << log_padded_product_x_size;
+    sfixn padded_product_y_size =  1 << log_padded_product_y_size;
+
+    thrust::device_vector<sfixn> padded_A(padded_product_x_size * padded_product_y_size);
+    const sfixn *A_ptr = thrust::raw_pointer_cast(A.data());
+    sfixn *padded_A_ptr = thrust::raw_pointer_cast(padded_A.data());
+    expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_A_ptr, product_x_size, A.size() / base.K, A_ptr);
+    DEBUG_PRINT("\tpadded_A: "); for (sfixn x : padded_A) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+
+    thrust::device_vector<sfixn> padded_B(padded_product_x_size * padded_product_y_size);
+    const sfixn *B_ptr = thrust::raw_pointer_cast(B.data());
+    sfixn *padded_B_ptr = thrust::raw_pointer_cast(padded_B.data());
+    expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_B_ptr, product_x_size, B.size() / base.K, B_ptr);
+    DEBUG_PRINT("\tpadded_B: "); for (sfixn x : padded_B) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
 
     // The output is written to padded_A, so we store a copy of it for when we compute the negacyclic convolution
     thrust::device_vector<sfixn> padded_A_copy(padded_A);
-    bi_stockham_poly_mul_dev(padded_product_y_size, product_y_num_bits, padded_product_x_size, product_x_num_bits, padded_A_ptr, padded_B_ptr, prime);
+    thrust::device_vector<sfixn> padded_B_copy(padded_B);
+    bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size, padded_product_x_size, log_padded_product_x_size, padded_A_ptr, padded_B_ptr, prime);
+    // TODO: bi_stockham_poly_mul_dev perfomrs FFT on B here, maybe we can reuse this result for NCC 
+    DEBUG_PRINT("\tFFT2(A * B): "); for (sfixn x : padded_A) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+    cudaDeviceSynchronize();
+    thrust::device_vector<sfixn> extracted_A(product_x_size * product_y_size);
+    extract_from_fft2_dev(product_x_size, product_y_size, thrust::raw_pointer_cast(extracted_A.data()), log_padded_product_x_size, padded_A_ptr);
 
-    // theta is a 2Kth primitive root of unity
-    sfixn theta = primitive_root(product_x_num_bits + 1, prime);
-    scale_x_argument_dev(padded_A_copy, base, theta, prime);
-    scale_x_argument_dev(padded_B, base, theta, prime);
+    // theta is a 2(padded K)th primitive root of unity
+    // something to fix here, not that clean, num_bits(base.K) computed twice (once at the start of the function?)
+    sfixn theta = primitive_root(log_padded_product_x_size + 1, prime);
+    scale_x_argument_dev(padded_A_copy, padded_product_x_size, theta, prime);    
+    scale_x_argument_dev(padded_B_copy, padded_product_x_size, theta, prime);
+    cudaDeviceSynchronize();
 
     // padded_A_copy will store the result of the negacyclic convolution
-    sfixn* padded_A_copy_ptr = thrust::raw_pointer_cast(padded_A_copy.data());
-    bi_stockham_poly_mul_dev(padded_product_y_size, product_y_num_bits, padded_product_x_size, product_x_num_bits, padded_A_copy_ptr, padded_B_ptr, prime);
+    sfixn *padded_A_copy_ptr = thrust::raw_pointer_cast(padded_A_copy.data());
+    sfixn *padded_B_copy_ptr = thrust::raw_pointer_cast(padded_B_copy.data());
+
+    bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size, padded_product_x_size, log_padded_product_x_size, padded_A_copy_ptr, padded_B_copy_ptr, prime);
+
+    cudaDeviceSynchronize();
+
+    scale_x_argument_dev(padded_A_copy, padded_product_x_size, inv_mod(theta, prime), prime);
+    cudaDeviceSynchronize();
+    
+    thrust::device_vector<sfixn> extracted_A_copy(product_x_size * product_y_size);
+    extract_from_fft2_dev(product_x_size, product_y_size, thrust::raw_pointer_cast(extracted_A_copy.data()), log_padded_product_x_size, padded_A_copy_ptr);
+
+    DEBUG_PRINT("2D convolution completed\n");
+    DEBUG_PRINT("\tCyclic Convolution: "); for (sfixn x : extracted_A) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+    DEBUG_PRINT("\tNegacyclic Convolution: "); for (sfixn x : extracted_A_copy) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+
+    return TwoConvolutionResult {
+        .cyclic_convolution = std::move(extracted_A),
+        .negacyclic_convolution = std::move(extracted_A_copy),
+    };
 }
 
-UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
+UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& a_src, const UnivariateMPZPolynomial& b_src)
 {
-
-
-
-    
-    /*
-    // Find the largest bit-width of any coefficient in a or b.
-    // Note that it suffices to compare the number of GMP limbs and the most significant limb in each coefficient.
-    const int largest_bit_width_of_coefficients {find_largest_bit_width_of_coefficients(a, b)};
-
-    BivariateBase base {determine_bivariate_base(largest_bit_width_of_coefficients)};
+    UnivariateMPZPolynomial a = a_src;
+    UnivariateMPZPolynomial b = b_src;
+    if (a.size() < 32)
+        a.resize(32);
+    if (b.size() < 32)
+        b.resize(32);
+    BivariateBase base {determine_bivariate_base(find_largest_bit_width_of_coefficients_dev(copy_polynomial_data_to_device(a, b)))};
     assert(base.K * base.M == base.N);
 
     // Convert the univariate polynomials a and b to bivariate polynomials.
 
     // assuming a machine word is 64 bit
-    constexpr sfixn prime_word1 = 4179340454199820289;
-    constexpr sfixn prime_word2 = 2485986994308513793;
 
-    BivariateMPZPolynomial a_bivariate1 {convert_to_modular_bivariate(a, base, prime_word1)};
-    BivariateMPZPolynomial a_bivariate2 {convert_to_modular_bivariate(a, base, prime_word2)};
+    struct UVSumAndDifference {
+        thrust::device_vector<sfixn> uv_sum;
+        thrust::device_vector<sfixn> uv_diff;
+    };
 
-    BivariateMPZPolynomial b_bivariate1 {convert_to_modular_bivariate(b, base, prime_word1)};
-    BivariateMPZPolynomial b_bivariate2 {convert_to_modular_bivariate(b, base, prime_word2)};
+    auto compute_uv_sum_and_diff = [&] (sfixn prime) -> UVSumAndDifference {
+        DEBUG_PRINT("Computing UV sum and difference for prime %d...\n", prime);
+        BivariateMPZPolynomial a_bivariate {convert_to_modular_bivariate(a, base, prime)};
+        BivariateMPZPolynomial b_bivariate {convert_to_modular_bivariate(b, base, prime)};
+        const auto& [cyclic_convolution, negacyclic_convolution] = two_convolution_2d_dev(a_bivariate, b_bivariate, base, prime);
+        const auto& [uv_sum, uv_diff] = modular_sum_and_difference_dev(cyclic_convolution, negacyclic_convolution, prime);
+        DEBUG_PRINT("UV sum and difference computed for prime %d:\n", prime);
+        DEBUG_PRINT("\tUV sum: "); for (sfixn x : uv_sum) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+        DEBUG_PRINT("\tUV diff: "); for (sfixn x : uv_diff) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+        return UVSumAndDifference {
+            .uv_sum = std::move(uv_sum),
+            .uv_diff = std::move(uv_diff)
+        };
+    };
 
-    BivariateMPZPolynomial c_minus1 {cyclic_convolution(a_bivariate1, b_bivariate1, base, prime_word1)};
-    BivariateMPZPolynomial c_minus2 {cyclic_convolution(a_bivariate2, b_bivariate2, base, prime_word2)};
-
-    BivariateMPZPolynomial c_plus1 {negacyclic_convolution(a_bivariate1, b_bivariate1, base, prime_word1)};
-    BivariateMPZPolynomial c_plus2 {negacyclic_convolution(a_bivariate2, b_bivariate2, base, prime_word2)};
-    */
+    using namespace TwoConvolutionConstants;
+    UVSumAndDifference uv_sum_and_diff1 = compute_uv_sum_and_diff(prime1);
+    UVSumAndDifference uv_sum_and_diff2 = compute_uv_sum_and_diff(prime2);
+    UVSumAndDifference uv_sum_and_diff3 = compute_uv_sum_and_diff(prime3);
+    auto bitwidth = [](sfixn x) {
+        return sizeof(sfixn) * 8 - __builtin_clz(x);
+    };
+    auto result = recover_product_host(
+        uv_sum_and_diff1.uv_sum,
+        uv_sum_and_diff2.uv_sum,
+        uv_sum_and_diff3.uv_sum,
+        uv_sum_and_diff1.uv_diff,
+        uv_sum_and_diff2.uv_diff,
+        uv_sum_and_diff3.uv_diff,
+        base,
+        1 + base.M + base.N + bitwidth(base.K) + bitwidth(std::max(a.size(), b.size()))
+    );
+    result.resize(a_src.size() + b_src.size() - 1); // resize to the correct size
+    return result;
 }

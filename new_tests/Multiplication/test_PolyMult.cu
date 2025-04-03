@@ -27,13 +27,14 @@
 #include <ctime>
 #include <cmath>
 #include <fstream>
-//#include "cumodp_simple.h"
-//#include "defines.h"
-//#include "inlines.h"
-//#include "cudautils.h"
-//#include "types.h"
+#include "cumodp_simple.h"
+#include "defines.h"
+#include "inlines.h"
+#include "cudautils.h"
+#include "types.h"
 #include "opt_plain_mul.h"
 #include "stockham.h"
+// #include "two_convolution_poly_mul.h"
 
 using namespace std;
 
@@ -84,6 +85,17 @@ printCpoly (sfixn *C, int c, const std::string& output_file)
 }
 
 /*
+void
+printMpzPoly(const UnivariateMPZPolynomial& poly, const std::string& output_file)
+{
+	ofstream ofs (output_file, ofstream::out);
+	for (auto x : poly)
+		ofs << x << " ";
+	ofs.close ();
+}
+	*/
+
+/*
  IMPORTANT
  n >= m
  verify = 1, if you want to test with Maple.
@@ -97,7 +109,7 @@ printCpoly (sfixn *C, int c, const std::string& output_file)
 int
 main (int argc, char *argv[])
 {
-	int n = 1024, m = 1024, p = 469762049, verify = 0;
+	int n = 4096, m = 4096, p = 469762049, verify = 1;
 	if (argc > 1)
 		n = atoi (argv[1]);
 	if (argc > 2)
@@ -127,16 +139,22 @@ main (int argc, char *argv[])
 	sfixn *N = new sfixn[n];
 	sfixn *C = new sfixn[m + n - 1];
 	sfixn *D = new sfixn[m + n - 1];
+	sfixn *E = new sfixn[m + n - 1];
 
 	getMpoly (M, m, p, verify); // getting 1st poly
 	getNpoly (N, n, p, verify); // getting 2nd poly
-	mulCUDA (M, N, C, m, n, p, verify);
+	// mulCUDA (M, N, C, m, n, p, verify);
 
-    printCpoly(C, m + n, "plain_mul.dat");
+    // printCpoly(C, m + n, "PolyCgpu.dat");
 
 	// It has a segamentation fault at the end
 	stockham_poly_mul_host(m+n, D, m-1, M, n-1, N, p);
-    printCpoly(D, m + n, "2D stockham.dat");
+    printCpoly(D, m + n, "PolyCgpu.dat");
+
+	// UnivariateMPZPolynomial a(M, M + m);
+	// UnivariateMPZPolynomial b(N, N + n);
+	// UnivariateMPZPolynomial c = two_convolution_poly_mul(a, b);
+	// printMpzPoly(c, "PolyCgpu.dat");
 
 	/*
 	 int j;

@@ -9,14 +9,14 @@ OBJS := $(SRCS:.cpp=.o)
 CXXFLAGS := \
 	-Wall \
 	-Werror \
-	-Wpedantic \
 	-std=c++20 \
 
 INCLUDE_DIRS := \
 	../include \
 
 CPPFLAGS := \
-	-DLINUXINTEL64
+	-DLINUXINTEL64 \
+	-DPRINT_DEBUG
 CPPFLAGS += $(addprefix -I, $(INCLUDE_DIRS))
 
 LIB_DIRS := \
