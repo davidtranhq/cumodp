@@ -183,6 +183,40 @@ TEST(TwoConvolutionPolyMul, EvaluateAtXDev)
         EXPECT_EQ(run_test(A, base, beta, prime), (BivariateMPZPolynomial{17, 38, 59}));
     }
 }
+
+TEST(TwoConvolutionPolyMul, ReconstructBivariatePolynomialWithCRTDev)
+{
+    auto run_test = [](const BivariateMPZPolynomial& p1, const BivariateMPZPolynomial& p2, const BivariateBase& base, sfixn prime1, sfixn prime2) {
+        thrust::device_vector<sfixn> result(p1);
+        reconstruct_bivariate_polynomial_with_crt_dev(result, p2, base, prime1, prime2);
+        return result;
+    };
+    {
+        BivariateMPZPolynomial p1 = {1, 4, 1, 5, 2, 3, 5, 2, 3, 4, 3, 3, 2, 0, 5, 4};
+        BivariateMPZPolynomial p2 = {4, 5, 2, 9, 9, 6, 6, 3, 10, 5, 6, 7, 9, 3, 6, 8};
+        BivariateBase base = {.N = 16, .K = 4, .M = 4};
+        sfixn prime1 = 7;
+        sfixn prime2 = 11
+        thrust::device_vector<sfixn> expected = {15, 60, 57, 75, 9, 17, 61, 58, 10, 60, 17, 73, 9, 14, 61, 74};
+        EXPECT_EQ(run_test(p1, p2, base, prime1, prime2) == ;
+    }
+}
+
+TEST(TwoConvolutionPolyMul, RecoverProductDev)
+{
+    auto run_test = [](const UnivariateMPZPolynomial& cyclic_convolution, const UnivariateMPZPolynomial& negacyclic_convolution, sfixn largest_bit_width_coefficient) {
+        thrust::device_vector<sfixn> d_cyclic_convolution(cyclic_convolution.begin(), cyclic_convolution.end());
+        const thrust::device_vector<sfixn> d_negacyclic_convolution(negacyclic_convolution.begin(), negacyclic_convolution.end());
+        recover_product_dev(d_cyclic_convolution, d_negacyclic_convolution, largest_bit_width_coefficient);
+        thrust::host_vector<sfixn> result = d_cyclic_convolution;
+        return result;
+    };
+    {
+        UnivariateMPZPolynomial cyclic_convolution = {1, 2, 3};
+        UnivariateMPZPolynomial negacyclic_convolution = {4, 5, 6};
+        sfixn largest_bit_width_coefficient = 3;
+        EXPECT_EQ(run_test(cyclic_convolution, negacyclic_convolution, largest_bit_width_coefficient), (UnivariateMPZPolynomial{10, 11, 12}));
+    }
 }
 
 /*

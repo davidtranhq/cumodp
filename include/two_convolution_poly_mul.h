@@ -41,4 +41,7 @@ thrust::device_vector<sfixn> convert_to_modular_bivariate_dev(const Coefficients
 void scale_x_argument_dev(thrust::device_vector<sfixn>&, const BivariateBase& base, sfixn theta, sfixn prime);
 void evaluate_at_x_dev(thrust::device_vector<sfixn>&, const BivariateBase&, sfixn beta, sfixn prime);
 
+void recover_product_dev(thrust::device_vector<sfixn>& cyclic_convolution, const thrust::device_vector<sfixn>& negacyclic_convolution, sfixn largest_bit_width_coefficient);
+UnivariateMPZPolynomial recover_product_host(const thrust::device_vector<sfixn>& cyclic_convolution, const thrust::device_vector<sfixn>& negacyclic_convolution, sfixn largest_bit_width_coefficient);
+
 thrust::device_vector<sfixn> two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase&, sfixn prime);
