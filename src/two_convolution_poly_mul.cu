@@ -953,10 +953,6 @@ UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& 
 {
     UnivariateMPZPolynomial a = a_src;
     UnivariateMPZPolynomial b = b_src;
-    if (a.size() < 32)
-        a.resize(32);
-    if (b.size() < 32)
-        b.resize(32);
     BivariateBase base {determine_bivariate_base(find_largest_bit_width_of_coefficients_dev(copy_polynomial_data_to_device(a, b)))};
     assert(base.K * base.M == base.N);
 
