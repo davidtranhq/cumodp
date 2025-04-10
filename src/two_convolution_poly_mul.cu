@@ -219,7 +219,7 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
 {
     DEBUG_PRINT("convert_to_modular_bivariate(%d (polynomial size), %d (base.K), %d (base.M), %d (prime))\n", p.size(), base.K, base.M, prime);
     assert(base.K * base.M == base.N);
-    BivariateMPZPolynomial bi(p.size() * base.K);
+    std::vector<sfixn> bi(p.size() * base.K);
     const int block_size {base.M};
     const int y_terms = p.size();
 
