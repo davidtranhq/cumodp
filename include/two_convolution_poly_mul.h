@@ -24,41 +24,18 @@ struct BivariateBase {
     sfixn M;
 };
 
-struct CoefficientsOnDevice {
-    thrust::device_vector<size_t> mpz_sizes;
-    thrust::device_vector<mp_limb_t> mpz_limbs;
-    thrust::device_vector<mp_limb_t> most_significant_mpz_limbs;
-};
-
 struct TwoConvolutionResult {
     thrust::device_vector<sfixn> cyclic_convolution;
     thrust::device_vector<sfixn> negacyclic_convolution;
 };
 
-
-CoefficientsOnDevice copy_polynomial_data_to_device(const UnivariateMPZPolynomial &a, const UnivariateMPZPolynomial &b);
-
-int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial &, const UnivariateMPZPolynomial &);
-int find_largest_bit_width_of_coefficients_dev(const CoefficientsOnDevice &);
+sfixn find_largest_bit_width_of_coefficients(const UnivariateMPZPolynomial&, const UnivariateMPZPolynomial&);
 
 BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomial&, const BivariateBase&, sfixn prime);
-thrust::device_vector<sfixn> convert_to_modular_bivariate_dev(const CoefficientsOnDevice&, const BivariateBase&, sfixn prime);
 
 void scale_x_argument_dev(thrust::device_vector<sfixn>&, sfixn size, sfixn theta, sfixn prime);
 
-
-void reconstruct_mpz_with_crt(mpz_t zp, const sfixn* a, const sfixn* b, const sfixn* c, int size, const BivariateBase& base, int limb_bits);
-
-UnivariateMPZPolynomial recover_product_dev(
-    const thrust::device_vector<sfixn>& sum1,
-    const thrust::device_vector<sfixn>& sum2,
-    const thrust::device_vector<sfixn>& sum3,
-    const thrust::device_vector<sfixn>& diff1,
-    const thrust::device_vector<sfixn>& diff2,
-    const thrust::device_vector<sfixn>& diff3,
-    const BivariateBase& base,
-    int limb_bits);
-UnivariateMPZPolynomial recover_product_host(const thrust::device_vector<sfixn>& cyclic_convolution, const thrust::device_vector<sfixn>& negacyclic_convolution, sfixn largest_bit_width_coefficient);
+void reconstruct_mpz_with_crt(mpz_t zp, const sfixn* a, const sfixn* b, const sfixn* c, sfixn size, const BivariateBase& base, sfixn limb_bits);
 
 TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase&, sfixn prime);
 

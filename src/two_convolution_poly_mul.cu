@@ -17,7 +17,7 @@
     #define DEBUG_PRINT(x, ...)
 #endif
 
-int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
+int find_largest_bit_width_of_coefficients(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {
     auto num_bits = [](const mpz_class& x) -> int {
         return mpz_sizeinbase(x.get_mpz_t(), 2);
@@ -30,105 +30,6 @@ int find_largest_bit_width_of_coefficients_naive(const UnivariateMPZPolynomial& 
     return largest_bit_width;
 }
 
-// __device__ helper: compute number of bits in the limb
-__device__ __forceinline__ int limb_bit_length(mp_limb_t limb) {
-#if GMP_LIMB_BITS == 32
-    // For 32-bit limbs use __clz
-    return limb ? (32 - __clz(limb)) : 0;
-#else
-    // For 64-bit limbs use __clzll
-    return limb ? (64 - __clzll(limb)) : 0;
-#endif
-}
-
-// First kernel: compute per-element bit width and reduce within a block.
-__global__ void reduce_max_bit_width_kernel(const size_t* mpz_sizes,
-                                              const mp_limb_t* ms_limbs,
-                                              int n,
-                                              int* partial_max) {
-    extern __shared__ int sdata[];
-    int tid = threadIdx.x;
-    // Use unrolling by a factor of 2 for improved load efficiency.
-    int idx = blockIdx.x * blockDim.x * 2 + tid;
-    int max_val = 0;
-
-    while (idx < n) {
-        int bit_width = 0;
-        size_t limbs = mpz_sizes[idx];
-        mp_limb_t limb = ms_limbs[idx];
-        if (limbs > 0) {
-            // If coefficient is nonzero, compute its bit width.
-            bit_width = (limbs - 1) * GMP_LIMB_BITS + limb_bit_length(limb);
-        }
-        max_val = max(max_val, bit_width);
-
-        // Unroll a second element per thread.
-        int idx2 = idx + blockDim.x;
-        if (idx2 < n) {
-            int bit_width2 = 0;
-            size_t limbs2 = mpz_sizes[idx2];
-            mp_limb_t limb2 = ms_limbs[idx2];
-            if (limbs2 > 0) {
-                bit_width2 = (limbs2 - 1) * GMP_LIMB_BITS + limb_bit_length(limb2);
-            }
-            max_val = max(max_val, bit_width2);
-        }
-        idx += blockDim.x * gridDim.x * 2;
-    }
-    sdata[tid] = max_val;
-    __syncthreads();
-
-    // Intra-block reduction in shared memory.
-    for (unsigned int s = blockDim.x / 2; s > 32; s >>= 1) {
-        if (tid < s)
-            sdata[tid] = max(sdata[tid], sdata[tid + s]);
-        __syncthreads();
-    }
-    // Final warp-level reduction (no __syncthreads needed with volatile).
-    if (tid < 32) {
-        volatile int* smem = sdata;
-        smem[tid] = max(smem[tid], smem[tid + 32]);
-        smem[tid] = max(smem[tid], smem[tid + 16]);
-        smem[tid] = max(smem[tid], smem[tid + 8]);
-        smem[tid] = max(smem[tid], smem[tid + 4]);
-        smem[tid] = max(smem[tid], smem[tid + 2]);
-        smem[tid] = max(smem[tid], smem[tid + 1]);
-    }
-    if (tid == 0)
-        partial_max[blockIdx.x] = sdata[0];
-}
-
-// Second kernel: reduce an array of ints (partial max values) to a single maximum.
-__global__ void reduce_max_kernel(const int* d_in, int n, int* d_out) {
-    extern __shared__ int sdata[];
-    int tid = threadIdx.x;
-    int idx = blockIdx.x * blockDim.x * 2 + tid;
-    int max_val = 0;
-    if (idx < n)
-        max_val = d_in[idx];
-    if (idx + blockDim.x < n)
-        max_val = max(max_val, d_in[idx + blockDim.x]);
-    sdata[tid] = max_val;
-    __syncthreads();
-
-    for (unsigned int s = blockDim.x / 2; s > 32; s >>= 1) {
-        if (tid < s)
-            sdata[tid] = max(sdata[tid], sdata[tid + s]);
-        __syncthreads();
-    }
-    if (tid < 32) {
-        volatile int* smem = sdata;
-        smem[tid] = max(smem[tid], smem[tid + 32]);
-        smem[tid] = max(smem[tid], smem[tid + 16]);
-        smem[tid] = max(smem[tid], smem[tid + 8]);
-        smem[tid] = max(smem[tid], smem[tid + 4]);
-        smem[tid] = max(smem[tid], smem[tid + 2]);
-        smem[tid] = max(smem[tid], smem[tid + 1]);
-    }
-    if (tid == 0)
-        d_out[blockIdx.x] = sdata[0];
-}
-
 constexpr BivariateBase determine_bivariate_base(sfixn largest_bit_width)
 {
     using TwoConvolutionConstants::base_table;
@@ -139,81 +40,6 @@ constexpr BivariateBase determine_bivariate_base(sfixn largest_bit_width)
     }
     assert(false && "No suitable base found, the largest bit width exceeds the maximum base size");
 }
-
-// Host function: launch kernels to perform the complete reduction.
-int find_largest_bit_width_of_coefficients_dev(const CoefficientsOnDevice& coeffs)
-{
-    const thrust::device_vector<size_t>& d_mpz_sizes = coeffs.mpz_sizes;
-    const thrust::device_vector<mp_limb_t>& d_most_significant_mpz_limbs = coeffs.most_significant_mpz_limbs;
-
-    int n = d_mpz_sizes.size();
-    if (n == 0) return 0;
-
-    // First-level reduction configuration.
-    int threadsPerBlock = 256;
-    // We unroll by a factor of 2.
-    int blocks = (n + threadsPerBlock * 2 - 1) / (threadsPerBlock * 2);
-
-    // Allocate a device vector for block–level partial maximums.
-    thrust::device_vector<int> d_partial_max(blocks);
-    const size_t* raw_mpz_sizes = thrust::raw_pointer_cast(d_mpz_sizes.data());
-    const mp_limb_t* raw_ms_limbs = thrust::raw_pointer_cast(d_most_significant_mpz_limbs.data());
-    int* raw_partial_max = thrust::raw_pointer_cast(d_partial_max.data());
-
-    size_t sharedMemSize = threadsPerBlock * sizeof(int);
-    // Launch the first kernel.
-    reduce_max_bit_width_kernel<<<blocks, threadsPerBlock, sharedMemSize>>>
-        (raw_mpz_sizes, raw_ms_limbs, n, raw_partial_max);
-    cudaDeviceSynchronize();
-
-    // Continue reducing the partial results until only one value remains.
-    int s = blocks;
-    while (s > 1) {
-        int threads = (s < threadsPerBlock * 2) ? ((s + 1) / 2) : threadsPerBlock;
-        int grid = (s + threads * 2 - 1) / (threads * 2);
-        thrust::device_vector<int> d_out(grid);
-        int* raw_in = thrust::raw_pointer_cast(d_partial_max.data());
-        int* raw_out = thrust::raw_pointer_cast(d_out.data());
-        reduce_max_kernel<<<grid, threads, threads * sizeof(int)>>>(raw_in, s, raw_out);
-        cudaDeviceSynchronize();
-        // Swap the partial results with the output for the next iteration.
-        d_partial_max.swap(d_out);
-        s = grid;
-    }
-    int result;
-    thrust::copy(d_partial_max.begin(), d_partial_max.end(), &result);
-    return result;
-}
-
-
-CoefficientsOnDevice copy_polynomial_data_to_device(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
-{
-    thrust::host_vector<size_t> mpz_sizes(a.size() + b.size());
-
-    size_t total_limbs = 0;
-    for (size_t i = 0; i < a.size() + b.size(); ++i) {
-        mpz_sizes[i] = mpz_size(i >= a.size() ? b[i - a.size()].get_mpz_t() : a[i].get_mpz_t());
-        total_limbs += mpz_sizes[i];
-    }
-    // Would it be better instead to cudaMemcpy each coefficient individually, so that
-    // each is 256-bit aligned?
-    thrust::host_vector<mp_limb_t> mpz_limbs(total_limbs);
-    thrust::host_vector<mp_limb_t> most_significant_mpz_limbs(a.size() + b.size());
-    for (size_t i = 0, offset = 0; i < a.size() + b.size(); ++i) {
-        // A lot of read-after-write hazards here, maybe could be an optimization target
-        const mpz_srcptr mpz = (i >= a.size() ? b[i - a.size()].get_mpz_t() : a[i].get_mpz_t());
-        std::memcpy(mpz_limbs.data() + offset, mpz->_mp_d, mpz_sizes[i] * sizeof(mp_limb_t));
-        offset += mpz_sizes[i];
-        most_significant_mpz_limbs[i] = mpz_sizes[i] ? mpz_limbs[offset - 1] : 0;
-    }
-
-    return CoefficientsOnDevice {
-        thrust::device_vector<size_t>(mpz_sizes),
-        thrust::device_vector<mp_limb_t>(mpz_limbs),
-        thrust::device_vector<mp_limb_t>(most_significant_mpz_limbs)
-    };
-}
-
 
 BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomial& p, const BivariateBase& base, sfixn prime)
 {
@@ -338,95 +164,6 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
     return bi;
 }
 
-// CUDA kernel: one thread per coefficient.
-__global__
-void convert_kernel(const size_t* __restrict__ d_mpz_sizes,
-                      const mp_limb_t* __restrict__ d_mpz_limbs,
-                      const size_t* __restrict__ d_offsets,
-                      sfixn* __restrict__ d_modular_bivariate,
-                      int num_coeffs, int baseK, int baseM, sfixn prime)
-{
-    int coeff = blockIdx.x * blockDim.x + threadIdx.x;
-    if (coeff >= num_coeffs) return;
-    
-    // Starting offset and size (number of limbs) for this coefficient.
-    size_t offset = d_offsets[coeff];
-    size_t size   = d_mpz_sizes[coeff];
-    
-    // Process each of the base.K blocks.
-    for (int j = 0; j < baseK; j++) {
-        // Compute the bit position of the jth block.
-        int bit_offset = j * baseM;
-        int limb_index = bit_offset / GMP_LIMB_BITS;
-        int bit_in_limb = bit_offset % GMP_LIMB_BITS;
-        
-        // Initialize the block value to zero.
-        mp_limb_t block_val = 0;
-        
-        // If the block's starting limb exists, extract from it.
-        if (limb_index < size) {
-            // Shift the limb so that the desired bits are in the lower part.
-            block_val = d_mpz_limbs[offset + limb_index] >> bit_in_limb;
-            // If the block spans a limb boundary, fetch the extra bits.
-            if ((bit_in_limb + baseM) > GMP_LIMB_BITS && (limb_index + 1) < size) {
-                int bits_from_next = (bit_in_limb + baseM) - GMP_LIMB_BITS;
-                mp_limb_t next_part = d_mpz_limbs[offset + limb_index + 1] 
-                                       & (((mp_limb_t)1 << bits_from_next) - 1);
-                block_val |= next_part << (GMP_LIMB_BITS - bit_in_limb);
-            }
-        }
-        // Mask to keep only baseM bits.
-        mp_limb_t mask = (((mp_limb_t)1) << baseM) - 1;
-        block_val &= mask;
-        
-        // Modular reduction: if the block value is at least prime, subtract prime.
-        if (block_val >= (mp_limb_t)prime)
-            block_val -= prime;
-        
-        // Store the result. The output layout is coefficient-major:
-        // coefficient 0 occupies indices 0..baseK-1, coefficient 1 indices baseK..2*baseK-1, etc.
-        d_modular_bivariate[coeff * baseK + j] = block_val;
-    }
-}
-
-// Host function that wraps the kernel launch.
-thrust::device_vector<sfixn> convert_to_modular_bivariate_dev(
-    const CoefficientsOnDevice& coeffs,
-    const BivariateBase& base,
-    sfixn prime)
-{
-    const thrust::device_vector<size_t>& d_mpz_sizes = coeffs.mpz_sizes;
-    const thrust::device_vector<mp_limb_t>& d_mpz_limbs = coeffs.mpz_limbs;
-
-    int num_coeffs = d_mpz_sizes.size();
-    
-    // Compute per-coefficient offsets using an exclusive scan.
-    thrust::device_vector<size_t> d_offsets(num_coeffs);
-    thrust::exclusive_scan(d_mpz_sizes.begin(), d_mpz_sizes.end(), d_offsets.begin());
-    
-    // Allocate the output vector:
-    // Each coefficient produces base.K blocks.
-    thrust::device_vector<sfixn> d_modular_bivariate(num_coeffs * base.K);
-    
-    // Launch kernel with one thread per coefficient.
-    int threadsPerBlock = 256;
-    int blocks = (num_coeffs + threadsPerBlock - 1) / threadsPerBlock;
-    convert_kernel<<<blocks, threadsPerBlock>>>(
-        thrust::raw_pointer_cast(d_mpz_sizes.data()),
-        thrust::raw_pointer_cast(d_mpz_limbs.data()),
-        thrust::raw_pointer_cast(d_offsets.data()),
-        thrust::raw_pointer_cast(d_modular_bivariate.data()),
-        num_coeffs,
-        base.K,
-        base.M,
-        prime);
-        
-    // Synchronize to ensure kernel completion (and check for errors if desired).
-    cudaDeviceSynchronize();
-    
-    return d_modular_bivariate;
-}
-
 // Kernel: each thread multiplies one coefficient by theta^j mod prime,
 // where j is the x–exponent given by (index % K).
 __global__ void scale_kernel(sfixn* A, size_t num_elements, int K, sfixn prime, const sfixn* theta_powers) {
@@ -508,168 +245,6 @@ ModularSumAndDifferenceResult modular_sum_and_difference_dev(const thrust::devic
         .modular_difference = std::move(modular_difference)
     };
 }
-
-/*
-// From https://github.com/orcca-uwo/BPAS/blob/7a7ce86819eba3f21098b6cc71a9762ca443d871/include/FFT/src/modpn_hfiles/inlineFuncs.h#L1614
-static inline sfixn MontMulModSpe_OPT3_AS_GENE_globalfunc(sfixn a, sfixn b, sfixn inv, sfixn prime)
-{
-    static constexpr int montgomery_base_power = 30;
-    static_assert(TwoConvolutionConstants::prime1 >> montgomery_base_power, "Montgomery base must be less than prime1");
-    static_assert(TwoConvolutionConstants::prime2 >> montgomery_base_power, "Montgomery base must be less than prime2");
-
-    asm("mulq %2\n\t"
-        "movq %%rax,%%rsi\n\t"
-        "movq %%rdx,%%rdi\n\t"
-        "imulq %3,%%rax\n\t"
-        "mulq %4\n\t"
-        "add %%rsi,%%rax\n\t"
-        "adc %%rdi,%%rdx\n\t"
-        "subq %4,%%rdx\n\t"
-        "mov %%rdx,%%rax\n\t"
-        "sar %%cl,%%rax\n\t"
-        "andq %4,%%rax\n\t"
-        "addq %%rax,%%rdx\n\t"
-        : "=d"(a)
-        : "a"(a), "rm"(b), "rm"(inv), "rm"(prime), "c"(montgomery_base_power)
-        : "rsi", "rdi");
-    return a;
-}
-*/
-
-/*
-// From https://github.com/orcca-uwo/BPAS/blob/7a7ce86819eba3f21098b6cc71a9762ca443d871/src/IntegerPolynomial/Multiplication/MulSSA-64_bit_arithmetic.cpp#L384
-void reconstruct_mpz_with_crt(mpz_t zp, sfixn *a, sfixn *b, int size, size_t limb_bits)
-{
-
-    mpz_t zn;
-    mpz_init2(zp, limb_bits);
-    mpz_init2(zn, limb_bits);
-
-    int idx = 0;
-    unsigned __int128 postainer[2] = {0}, negtainer[2] = {0};
-    sfixn shifter = 0;
-    for (int i = 0; i < size; ++i)
-    {
-        // sfixn diff =(a[i] - b[i]);
-        // elem = elem * P2 + b[i];
-        sfixn diff = (a[i] - b[i]);
-        if (diff < 0)
-        {
-            diff += TwoConvolutionConstants::prime1;
-        }
-        __int128 elem = MontMulModSpe_OPT3_AS_GENE_globalfunc(diff, TwoConvolutionConstants::u2_r1_sft, TwoConvolutionConstants::inverse_prime1, TwoConvolutionConstants::prime1);
-        elem = elem * TwoConvolutionConstants::prime2 + b[i];
-        if (elem > TwoConvolutionConsants::half_prime1_prime2)
-        {
-            elem -= TwoConvolutionConstants::prime1_prime2
-        }
-        else if (elem < TwoConvolutionConsants::neg_half_prime1_prime2)
-        {
-            elem += TwoConvolutionConstants::prime1_prime2;
-        }
-
-        if (elem < 0)
-        {
-            elem = -elem;
-            unsigned __int128 tmp = elem << shifter;
-            negtainer[0] += tmp;
-            bool carry = negtainer[0] < tmp;
-            if (shifter)
-                tmp = elem >> (128 - shifter);
-            else
-            {
-                tmp = 0;
-            }
-            negtainer[1] += tmp + carry;
-        }
-        else if (elem > 0)
-        {
-            unsigned __int128 tmp = elem << shifter;
-            postainer[0] += tmp;
-            bool carry = postainer[0] < tmp;
-            if (shifter)
-                tmp = elem >> (128 - shifter);
-            else
-            {
-                tmp = 0;
-            }
-            postainer[1] += tmp + carry;
-        }
-        shifter += M;
-
-        if (shifter >= 128)
-        {
-            if (postainer[0] > 0)
-            {
-                zp->_mp_d[idx] = (mp_limb_t)postainer[0];
-                zp->_mp_d[idx + 1] = (mp_limb_t)(postainer[0] >> GMP_LIMB_BITS);
-                zp->_mp_size = idx + 2;
-            }
-            else
-            {
-                zp->_mp_d[idx] = 0;
-                zp->_mp_d[idx + 1] = 0;
-            }
-            postainer[0] = postainer[1];
-            postainer[1] = 0;
-
-            if (negtainer[0] > 0)
-            {
-                zn->_mp_d[idx] = (mp_limb_t)negtainer[0];
-                zn->_mp_d[idx + 1] = (mp_limb_t)(negtainer[0] >> GMP_LIMB_BITS);
-                zn->_mp_size = idx + 2;
-            }
-            else
-            {
-                zn->_mp_d[idx] = 0;
-                zn->_mp_d[idx + 1] = 0;
-            }
-            negtainer[0] = negtainer[1];
-            negtainer[1] = 0;
-
-            shifter -= 128;
-            idx += 2;
-        }
-    }
-
-    if (postainer[0] > 0)
-    {
-        zp->_mp_d[idx] = (mp_limb_t)postainer[0];
-        zp->_mp_d[idx + 1] = (mp_limb_t)(postainer[0] >> GMP_LIMB_BITS);
-        zp->_mp_size = idx + 2;
-    }
-    if (negtainer[0] > 0)
-    {
-        zn->_mp_d[idx] = (mp_limb_t)negtainer[0];
-        zn->_mp_d[idx + 1] = (mp_limb_t)(negtainer[0] >> GMP_LIMB_BITS);
-        zn->_mp_size = idx + 2;
-    }
-    idx += 2;
-    if (postainer[1] > 0)
-    {
-        zp->_mp_d[idx] = (mp_limb_t)postainer[1];
-        zp->_mp_d[idx + 1] = (mp_limb_t)(postainer[1] >> GMP_LIMB_BITS);
-        zp->_mp_size = idx + 2;
-    }
-    if (negtainer[1] > 0)
-    {
-        zn->_mp_d[idx] = (mp_limb_t)negtainer[1];
-        zn->_mp_d[idx + 1] = (mp_limb_t)(negtainer[1] >> GMP_LIMB_BITS);
-        zn->_mp_size = idx + 2;
-    }
-
-    if (zp->_mp_size && !zp->_mp_d[zp->_mp_size - 1])
-        zp->_mp_size--;
-    if (zn->_mp_size && !zn->_mp_d[zn->_mp_size - 1])
-        zn->_mp_size--;
-
-    if (zn > 0)
-    {
-        mpz_sub(zp, zp, zn);
-    }
-    mpz_clear(zn);
-}
-*/
 
 /**
  * Convert from CRT representation to a mpz_t object
@@ -777,53 +352,6 @@ void reconstruct_mpz_with_crt(mpz_t zp, const sfixn* a, const sfixn* b, const sf
 	mpz_clear(zn);
 }
 
-
-UnivariateMPZPolynomial recover_product_dev(
-    const thrust::device_vector<sfixn>& sum1,
-    const thrust::device_vector<sfixn>& sum2,
-    const thrust::device_vector<sfixn>& sum3,
-    const thrust::device_vector<sfixn>& diff1,
-    const thrust::device_vector<sfixn>& diff2,
-    const thrust::device_vector<sfixn>& diff3,
-    const BivariateBase& base,
-    int limb_bits)
-{
-    DEBUG_PRINT("Recovering Product from CRT representation...\n");
-    assert(sum1.size() == sum2.size());
-    assert(diff1.size() == diff2.size());
-    assert(sum1.size() == diff1.size());
-    UnivariateMPZPolynomial product(sum1.size() / base.K);
-    for (size_t i = 0; i < product.size(); ++i) {
-        // Offset into the bivariate polynomial pointing to the start of y^i
-        size_t offset = i * base.K;
-        mpz_t uv_sum, uv_diff;
-
-        reconstruct_mpz_with_crt(
-            uv_sum,
-            thrust::raw_pointer_cast(sum1.data() + offset),
-            thrust::raw_pointer_cast(sum2.data() + offset),
-            thrust::raw_pointer_cast(sum3.data() + offset),
-            base,
-            limb_bits);
-        reconstruct_mpz_with_crt(
-            uv_diff,
-            thrust::raw_pointer_cast(diff1.data() + offset),
-            thrust::raw_pointer_cast(diff2.data() + offset),
-            thrust::raw_pointer_cast(diff3.data() + offset),
-            base,
-            limb_bits);
-        mpz_mul_2exp(uv_diff, uv_diff, base.N);
-        mpz_add(product[i].get_mpz_t(), uv_sum, uv_diff);
-        product[i] >>= 1;
-        mpz_clear(uv_sum);
-        mpz_clear(uv_diff);
-    }
-    DEBUG_PRINT("Product recovered:\n");
-    DEBUG_PRINT("\tproduct: "); for (auto x : product) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
-    return product;
-}
-
-// Rewrite the above function but using host_vectors instead of device_vectors
 UnivariateMPZPolynomial recover_product_host(
     const thrust::host_vector<sfixn>& sum1,
     const thrust::host_vector<sfixn>& sum2,
@@ -949,11 +477,9 @@ TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& 
     };
 }
 
-UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& a_src, const UnivariateMPZPolynomial& b_src)
+UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {
-    UnivariateMPZPolynomial a = a_src;
-    UnivariateMPZPolynomial b = b_src;
-    BivariateBase base {determine_bivariate_base(find_largest_bit_width_of_coefficients_dev(copy_polynomial_data_to_device(a, b)))};
+    BivariateBase base {determine_bivariate_base(find_largest_bit_width_of_coefficients(a, b))};
     assert(base.K * base.M == base.N);
 
     // Convert the univariate polynomials a and b to bivariate polynomials.
@@ -997,6 +523,6 @@ UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& 
         base,
         1 + base.M + base.N + bitwidth(base.K) + bitwidth(std::max(a.size(), b.size()))
     );
-    result.resize(a_src.size() + b_src.size() - 1); // resize to the correct size
+    result.resize(a.size() + b.size() - 1); // resize to the correct size
     return result;
 }
