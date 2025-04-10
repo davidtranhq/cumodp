@@ -486,40 +486,32 @@ UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& 
 
     // assuming a machine word is 64 bit
 
-    struct UVSumAndDifference {
-        thrust::device_vector<sfixn> uv_sum;
-        thrust::device_vector<sfixn> uv_diff;
-    };
-
-    auto compute_uv_sum_and_diff = [&] (sfixn prime) -> UVSumAndDifference {
+    auto compute_uv_sum_and_diff = [&] (sfixn prime) -> ModularSumAndDifferenceResult {
         DEBUG_PRINT("Computing UV sum and difference for prime %d...\n", prime);
         BivariateMPZPolynomial a_bivariate {convert_to_modular_bivariate(a, base, prime)};
         BivariateMPZPolynomial b_bivariate {convert_to_modular_bivariate(b, base, prime)};
-        const auto& [cyclic_convolution, negacyclic_convolution] = two_convolution_2d_dev(a_bivariate, b_bivariate, base, prime);
-        const auto& [uv_sum, uv_diff] = modular_sum_and_difference_dev(cyclic_convolution, negacyclic_convolution, prime);
+        const TwoConvolutionResult& two_conv = two_convolution_2d_dev(a_bivariate, b_bivariate, base, prime);
+        const ModularSumAndDifferenceResult& mod_sum_and_diff = modular_sum_and_difference_dev(two_conv.cyclic_convolution, two_conv.negacyclic_convolution, prime);
         DEBUG_PRINT("UV sum and difference computed for prime %d:\n", prime);
-        DEBUG_PRINT("\tUV sum: "); for (sfixn x : uv_sum) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
-        DEBUG_PRINT("\tUV diff: "); for (sfixn x : uv_diff) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
-        return UVSumAndDifference {
-            .uv_sum = std::move(uv_sum),
-            .uv_diff = std::move(uv_diff)
-        };
+        DEBUG_PRINT("\tUV sum: "); for (sfixn x : mod_sum_and_diff.modular_sum) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+        DEBUG_PRINT("\tUV diff: "); for (sfixn x : mod_sum_and_diff.modular_difference) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
+        return mod_sum_and_diff;
     };
 
     using namespace TwoConvolutionConstants;
-    UVSumAndDifference uv_sum_and_diff1 = compute_uv_sum_and_diff(prime1);
-    UVSumAndDifference uv_sum_and_diff2 = compute_uv_sum_and_diff(prime2);
-    UVSumAndDifference uv_sum_and_diff3 = compute_uv_sum_and_diff(prime3);
+    ModularSumAndDifferenceResult uv_sum_and_diff1 = compute_uv_sum_and_diff(prime1);
+    ModularSumAndDifferenceResult uv_sum_and_diff2 = compute_uv_sum_and_diff(prime2);
+    ModularSumAndDifferenceResult uv_sum_and_diff3 = compute_uv_sum_and_diff(prime3);
     auto bitwidth = [](sfixn x) {
         return sizeof(sfixn) * 8 - __builtin_clz(x);
     };
     auto result = recover_product_host(
-        uv_sum_and_diff1.uv_sum,
-        uv_sum_and_diff2.uv_sum,
-        uv_sum_and_diff3.uv_sum,
-        uv_sum_and_diff1.uv_diff,
-        uv_sum_and_diff2.uv_diff,
-        uv_sum_and_diff3.uv_diff,
+        uv_sum_and_diff1.modular_sum,
+        uv_sum_and_diff2.modular_sum,
+        uv_sum_and_diff3.modular_sum,
+        uv_sum_and_diff1.modular_difference,
+        uv_sum_and_diff2.modular_difference,
+        uv_sum_and_diff3.modular_difference,
         base,
         1 + base.M + base.N + bitwidth(base.K) + bitwidth(std::max(a.size(), b.size()))
     );
