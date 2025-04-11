@@ -10,13 +10,6 @@
 #include "list_stockham.h"
 #include "inlines.h"
 
-#define TWO_CONV_POLY_MUL_DEBUG 0
-#if TWO_CONV_POLY_MUL_DEBUG
-    #define DEBUG_PRINT(x, ...) fprintf(stderr, x, ##__VA_ARGS__); fflush(stdout);
-#else
-    #define DEBUG_PRINT(x, ...)
-#endif
-
 int find_largest_bit_width_of_coefficients(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {
     auto num_bits = [](const mpz_class& x) -> int {
@@ -43,7 +36,6 @@ constexpr BivariateBase determine_bivariate_base(sfixn largest_bit_width)
 
 BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomial& p, const BivariateBase& base, sfixn prime)
 {
-    DEBUG_PRINT("convert_to_modular_bivariate(%d (polynomial size), %d (base.K), %d (base.M), %d (prime))\n", p.size(), base.K, base.M, prime);
     assert(base.K * base.M == base.N);
     std::vector<sfixn> bi(p.size() * base.K);
     const int block_size {base.M};
@@ -159,8 +151,6 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
     for (int y_power = 0; y_power < y_terms; ++y_power)
         convert_mpz_to_modular_univariate(y_power);
     
-    DEBUG_PRINT("Converted to modular bivariate polynomial:\n");
-    DEBUG_PRINT("\tbi: "); for (auto x : bi) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
     return bi;
 }
 
@@ -217,7 +207,6 @@ ModularSumAndDifferenceResult modular_sum_and_difference_dev(const thrust::devic
                                                             const thrust::device_vector<sfixn>& v,
                                                             sfixn prime)
 {
-    DEBUG_PRINT("modular_sum_and_difference_dev(%d, %d, %d)\n", u.size(), v.size(), prime);
     assert(u.size() == v.size());
     thrust::device_vector<sfixn> modular_sum(u.size());
     thrust::transform(u.begin(), u.end(),
@@ -227,8 +216,6 @@ ModularSumAndDifferenceResult modular_sum_and_difference_dev(const thrust::devic
                           sfixn sum = a + b;
                           return (sum >= prime) ? sum - prime : sum;
                       });
-
-    DEBUG_PRINT("\tmodular_sum: "); for (sfixn x : modular_sum) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
     
     thrust::device_vector<sfixn> modular_difference(u.size());
     thrust::transform(u.begin(), u.end(),
@@ -238,8 +225,6 @@ ModularSumAndDifferenceResult modular_sum_and_difference_dev(const thrust::devic
                           sfixn diff = a - b;
                           return (diff < 0) ? diff + prime : diff;
                       });
-
-    DEBUG_PRINT("\tmodular_difference: "); for (sfixn x : modular_difference) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
     return {
         .modular_sum = std::move(modular_sum),
         .modular_difference = std::move(modular_difference)
@@ -362,7 +347,6 @@ UnivariateMPZPolynomial recover_product_host(
     const BivariateBase& base,
     int limb_bits)
 {
-    DEBUG_PRINT("Recovering Product from CRT representation...\n");
     assert(sum1.size() == sum2.size());
     assert(diff1.size() == diff2.size());
     assert(sum1.size() == diff1.size());
@@ -392,8 +376,6 @@ UnivariateMPZPolynomial recover_product_host(
         mpz_clear(uv_sum);
         mpz_clear(uv_diff);
     }
-    DEBUG_PRINT("Product recovered:\n");
-    DEBUG_PRINT("\tproduct: "); for (auto x : product) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
     return product;
 }
 
@@ -402,8 +384,6 @@ UnivariateMPZPolynomial recover_product_host(
 
 TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase& base, sfixn prime)
 {
-    DEBUG_PRINT("Performing 2D convolution with base %d (K), %d (M), %d (N) and prime %d...\n", base.K, base.M, base.N, prime);
-
     sfixn product_x_size = base.K;
     sfixn product_y_size = A.size() / base.K + B.size() / base.K - 1;
 
@@ -428,21 +408,17 @@ TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& 
     const sfixn *A_ptr = thrust::raw_pointer_cast(A.data());
     sfixn *padded_A_ptr = thrust::raw_pointer_cast(padded_A.data());
     expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_A_ptr, product_x_size, A.size() / base.K, A_ptr);
-    DEBUG_PRINT("\tpadded_A: "); for (sfixn x : padded_A) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
 
     thrust::device_vector<sfixn> padded_B(padded_product_x_size * padded_product_y_size);
     const sfixn *B_ptr = thrust::raw_pointer_cast(B.data());
     sfixn *padded_B_ptr = thrust::raw_pointer_cast(padded_B.data());
     expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_B_ptr, product_x_size, B.size() / base.K, B_ptr);
-    DEBUG_PRINT("\tpadded_B: "); for (sfixn x : padded_B) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
 
     // The output is written to padded_A, so we store a copy of it for when we compute the negacyclic convolution
     thrust::device_vector<sfixn> padded_A_copy(padded_A);
     thrust::device_vector<sfixn> padded_B_copy(padded_B);
     bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size, padded_product_x_size, log_padded_product_x_size, padded_A_ptr, padded_B_ptr, prime);
     // TODO: bi_stockham_poly_mul_dev perfomrs FFT on B here, maybe we can reuse this result for NCC 
-    DEBUG_PRINT("\tFFT2(A * B): "); for (sfixn x : padded_A) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
-    cudaDeviceSynchronize();
     thrust::device_vector<sfixn> extracted_A(product_x_size * product_y_size);
     extract_from_fft2_dev(product_x_size, product_y_size, thrust::raw_pointer_cast(extracted_A.data()), log_padded_product_x_size, padded_A_ptr);
 
@@ -467,10 +443,6 @@ TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& 
     thrust::device_vector<sfixn> extracted_A_copy(product_x_size * product_y_size);
     extract_from_fft2_dev(product_x_size, product_y_size, thrust::raw_pointer_cast(extracted_A_copy.data()), log_padded_product_x_size, padded_A_copy_ptr);
 
-    DEBUG_PRINT("2D convolution completed\n");
-    DEBUG_PRINT("\tCyclic Convolution: "); for (sfixn x : extracted_A) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
-    DEBUG_PRINT("\tNegacyclic Convolution: "); for (sfixn x : extracted_A_copy) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
-
     return TwoConvolutionResult {
         .cyclic_convolution = std::move(extracted_A),
         .negacyclic_convolution = std::move(extracted_A_copy),
@@ -487,14 +459,10 @@ UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& 
     // assuming a machine word is 64 bit
 
     auto compute_uv_sum_and_diff = [&] (sfixn prime) -> ModularSumAndDifferenceResult {
-        DEBUG_PRINT("Computing UV sum and difference for prime %d...\n", prime);
         BivariateMPZPolynomial a_bivariate {convert_to_modular_bivariate(a, base, prime)};
         BivariateMPZPolynomial b_bivariate {convert_to_modular_bivariate(b, base, prime)};
         const TwoConvolutionResult& two_conv = two_convolution_2d_dev(a_bivariate, b_bivariate, base, prime);
         const ModularSumAndDifferenceResult& mod_sum_and_diff = modular_sum_and_difference_dev(two_conv.cyclic_convolution, two_conv.negacyclic_convolution, prime);
-        DEBUG_PRINT("UV sum and difference computed for prime %d:\n", prime);
-        DEBUG_PRINT("\tUV sum: "); for (sfixn x : mod_sum_and_diff.modular_sum) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
-        DEBUG_PRINT("\tUV diff: "); for (sfixn x : mod_sum_and_diff.modular_difference) { DEBUG_PRINT("%d ", x); } DEBUG_PRINT("\n");
         return mod_sum_and_diff;
     };
 
