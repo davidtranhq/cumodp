@@ -14,8 +14,8 @@ ARCH=LINUXINTEL64
 ##################################################
 ifeq ($(ARCH), LINUXINTEL64)
 	CC=gcc
-	GXX=g++
-	NVCC=nvcc -std=c++17 --extended-lambda -ccbin $(GXX) -O2 -lineinfo
+	GXX=g++ -std=c++14
+	NVCC=nvcc -std=c++14 --extended-lambda -ccbin $(GXX) -O2 -lineinfo
 	
 	CFLAGS= -c -O2 -DLINUXINTEL64 -I$(CUMODP_HOME)/include -w
 	
