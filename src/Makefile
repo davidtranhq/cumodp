@@ -15,9 +15,9 @@ ARCH=LINUXINTEL64
 ifeq ($(ARCH), LINUXINTEL64)
 	CC=gcc
 	GXX=g++
-	NVCC=nvcc -std=c++17 --extended-lambda -ccbin /home/dtran253/.local/bin/g++
+	NVCC=nvcc -std=c++17 --extended-lambda -ccbin $(GXX) -O2 -lineinfo
 	
-	CFLAGS= -c -O0 -DLINUXINTEL64 -g -I$(CUMODP_HOME)/include -w -DDEBUG
+	CFLAGS= -c -O2 -DLINUXINTEL64 -I$(CUMODP_HOME)/include -w
 	
 	CUFLAGS=--compiler-options '-fPIC -Wall -Wno-unused-but-set-variable -Wno-comment' -Xptxas -dlcm=cg --cudart shared $(GENCODE_ARCH_COMPUTE)
 

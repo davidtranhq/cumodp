@@ -9,9 +9,9 @@ end proc:
 # Parameter lists.
 # n and m are the numbers of coefficients for the two polynomials.
 # p (here) is simply the upper limit for the coefficients; coefficients are chosen in the range 0..p-1.
-nList := [128]:
-mList := [128]:
-pList := [9999999999]:  # Examples: p=13 will generate coefficients from 0 to 12.
+nList := [1024]:
+mList := [1024]:
+pList := [99999]:  # Examples: p=13 will generate coefficients from 0 to 12.
 
 # Loop over each combination of parameters.
 for n in nList do
@@ -32,7 +32,7 @@ for n in nList do
             # Build an output filename that encodes the parameters.
             # For example: "n256_m256_p13.dat"
             filename := cat("n", convert(n, string), "_m", convert(m, string),
-                            "_p", convert(p, string), ".dat"):
+                            "_p", convert(p, string), ".test"):
             fd := fopen(filename, WRITE):
             
             # Print the three polynomials on separate lines.

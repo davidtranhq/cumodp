@@ -10,6 +10,8 @@ CXXFLAGS := \
 	-Wall \
 	-Werror \
 	-std=c++20 \
+	-O2 \
+	-g
 
 INCLUDE_DIRS := \
 	../include \
