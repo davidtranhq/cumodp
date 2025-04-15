@@ -194,9 +194,6 @@ void scale_x_argument_dev(thrust::device_vector<sfixn>& A, sfixn size, sfixn the
         prime,
         thrust::raw_pointer_cast(d_theta_powers.data())
     );
-
-    // Wait for GPU to finish before returning.
-    cudaDeviceSynchronize();
 }
 
 struct ModularSumAndDifferenceResult {
@@ -415,11 +412,13 @@ TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& 
     expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_B_ptr, product_x_size, B.size() / base.K, B_ptr);
 
     // The output is written to padded_A, so we store a copy of it for when we compute the negacyclic convolution
+    cudaDeviceSynchronize();
     thrust::device_vector<sfixn> padded_A_copy(padded_A);
     thrust::device_vector<sfixn> padded_B_copy(padded_B);
     bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size, padded_product_x_size, log_padded_product_x_size, padded_A_ptr, padded_B_ptr, prime);
     // TODO: bi_stockham_poly_mul_dev perfomrs FFT on B here, maybe we can reuse this result for NCC 
     thrust::device_vector<sfixn> extracted_A(product_x_size * product_y_size);
+    cudaDeviceSynchronize();
     extract_from_fft2_dev(product_x_size, product_y_size, thrust::raw_pointer_cast(extracted_A.data()), log_padded_product_x_size, padded_A_ptr);
 
     // theta is a 2(padded K)th primitive root of unity
@@ -427,20 +426,20 @@ TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& 
     sfixn theta = primitive_root(log_padded_product_x_size + 1, prime);
     scale_x_argument_dev(padded_A_copy, padded_product_x_size, theta, prime);    
     scale_x_argument_dev(padded_B_copy, padded_product_x_size, theta, prime);
-    cudaDeviceSynchronize();
 
     // padded_A_copy will store the result of the negacyclic convolution
     sfixn *padded_A_copy_ptr = thrust::raw_pointer_cast(padded_A_copy.data());
     sfixn *padded_B_copy_ptr = thrust::raw_pointer_cast(padded_B_copy.data());
 
+    cudaDeviceSynchronize();
     bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size, padded_product_x_size, log_padded_product_x_size, padded_A_copy_ptr, padded_B_copy_ptr, prime);
 
     cudaDeviceSynchronize();
-
     scale_x_argument_dev(padded_A_copy, padded_product_x_size, inv_mod(theta, prime), prime);
-    cudaDeviceSynchronize();
+    
     
     thrust::device_vector<sfixn> extracted_A_copy(product_x_size * product_y_size);
+    cudaDeviceSynchronize();
     extract_from_fft2_dev(product_x_size, product_y_size, thrust::raw_pointer_cast(extracted_A_copy.data()), log_padded_product_x_size, padded_A_copy_ptr);
 
     return TwoConvolutionResult {
