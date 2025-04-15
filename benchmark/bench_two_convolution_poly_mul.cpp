@@ -179,13 +179,14 @@ int main(int argc, char* argv[])
     }
 
     std::vector<std::string> input_files = {
-        "n32_m32_p99999.test",
-        "n64_m64_p99999.test",
-        "n128_m128_p99999.test",
-        "n256_m256_p99999.test",
-        "n512_m512_p99999.test",
-        "n1024_m1024_p99999.test",
-        "n2048_m2048_p99999.test",
+        "n32_m32_p10000000000.test",
+        "n64_m64_p10000000000.test",
+        "n128_m128_p10000000000.test",
+        "n256_m256_p10000000000.test",
+        "n512_m512_p10000000000.test",
+        "n1024_m1024_p10000000000.test",
+        "n2048_m2048_p10000000000.test",
+        "n4096_m4096_p10000000000.test",
     };
 
     for (const auto& input_file : input_files) {
