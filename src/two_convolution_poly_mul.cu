@@ -85,7 +85,7 @@ BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomia
 {
     ScopedTimer t("convert_to_modular_bivariate");
     assert(base.K * base.M == base.N);
-    std::vector<sfixn> bi(p.size() * base.K);
+    BivariateMPZPolynomial bi(p.size() * base.K);
     const int block_size {base.M};
     const int y_terms = p.size();
 
@@ -427,15 +427,16 @@ UnivariateMPZPolynomial recover_product_host(
     return product;
 }
 
-
-
-
-TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase& base, sfixn prime)
+TwoConvolutionResult two_convolution_2d_dev(
+    const std::vector<thrust::device_vector<sfixn>>& As,
+    const std::vector<thrust::device_vector<sfixn>>& Bs,
+    const std::vector<sfixn> primes,
+    const BivariateBase& base)
 {
     Timer total_timer("two_convolution_2d_dev"); total_timer.start();
 
     sfixn product_x_size = base.K;
-    sfixn product_y_size = A.size() / base.K + B.size() / base.K - 1;
+    sfixn product_y_size = As[0].size() / base.K + Bs[0].size() / base.K - 1;
 
     auto num_bits = [](sfixn x) -> sfixn {
         return sizeof(sfixn) * 8 - __builtin_clz(x);
@@ -452,79 +453,105 @@ TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& 
     sfixn padded_product_x_size = 1 << log_padded_product_x_size;
     sfixn padded_product_y_size = 1 << log_padded_product_y_size;
 
+
     Timer t_expand("expand"); t_expand.start();
+    std::vector<thrust::device_vector<sfixn>> padded_As(As.size());
+    std::vector<thrust::device_vector<sfixn>> padded_Bs(Bs.size());
+    for (size_t i = 0; i < As.size(); ++i) {
+        const thrust::device_vector<sfixn>& A = As[i];
+        const thrust::device_vector<sfixn>& B = Bs[i];
+        thrust::device_vector<sfixn> padded_A(padded_product_x_size * padded_product_y_size);
+        thrust::device_vector<sfixn> padded_B(padded_product_x_size * padded_product_y_size);
 
-    thrust::device_vector<sfixn> padded_A(padded_product_x_size * padded_product_y_size);
-    thrust::device_vector<sfixn> padded_B(padded_product_x_size * padded_product_y_size);
+        const sfixn *A_ptr = thrust::raw_pointer_cast(A.data());
+        const sfixn *B_ptr = thrust::raw_pointer_cast(B.data());
+        sfixn *padded_A_ptr = thrust::raw_pointer_cast(padded_A.data());
+        sfixn *padded_B_ptr = thrust::raw_pointer_cast(padded_B.data());
 
-    const sfixn *A_ptr = thrust::raw_pointer_cast(A.data());
-    const sfixn *B_ptr = thrust::raw_pointer_cast(B.data());
-    sfixn *padded_A_ptr = thrust::raw_pointer_cast(padded_A.data());
-    sfixn *padded_B_ptr = thrust::raw_pointer_cast(padded_B.data());
+        expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_A_ptr, product_x_size, A.size() / base.K, A_ptr);
+        expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_B_ptr, product_x_size, B.size() / base.K, B_ptr);
 
-    expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_A_ptr, product_x_size, A.size() / base.K, A_ptr);
-    expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_B_ptr, product_x_size, B.size() / base.K, B_ptr);
-
+        padded_As[i] = std::move(padded_A);
+        padded_Bs[i] = std::move(padded_B);
+    }
     cudaDeviceSynchronize();
     t_expand.stop();
 
     Timer t_fft("fft"); t_fft.start();
-
-    thrust::device_vector<sfixn> padded_A_copy(padded_A);
-    thrust::device_vector<sfixn> padded_B_copy(padded_B);
-
-    bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size,
-                             padded_product_x_size, log_padded_product_x_size,
-                             padded_A_ptr, padded_B_ptr, prime);
-
-    thrust::device_vector<sfixn> extracted_A(product_x_size * product_y_size);
+    std::vector<thrust::device_vector<sfixn>> padded_A_copys(padded_As);
+    std::vector<thrust::device_vector<sfixn>> padded_B_copys(padded_Bs);
+    for (size_t i = 0; i < As.size(); ++i) {
+        sfixn *padded_A_ptr = thrust::raw_pointer_cast(padded_As[i].data());
+        sfixn *padded_B_ptr = thrust::raw_pointer_cast(padded_Bs[i].data());
+        bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size,
+                                padded_product_x_size, log_padded_product_x_size,
+                                padded_A_ptr, padded_B_ptr, primes[i]);
+    }
     cudaDeviceSynchronize();
     t_fft.stop();
 
     Timer t_extract("extract_and_scale"); t_extract.start();
+    std::vector<thrust::device_vector<sfixn>> extracted_As(As.size(), thrust::device_vector<sfixn>(product_x_size * product_y_size));
+    std::vector<sfixn> thetas(As.size());
+    for (size_t i = 0; i < As.size(); ++i) {
+        const thrust::device_vector<sfixn>& padded_A = padded_As[i];
+        thrust::device_vector<sfixn>& extracted_A = extracted_As[i];
+        thrust::device_vector<sfixn>& padded_A_copy = padded_A_copys[i];
+        thrust::device_vector<sfixn>& padded_B_copy = padded_B_copys[i];
 
-    extract_from_fft2_dev(product_x_size, product_y_size,
-                          thrust::raw_pointer_cast(extracted_A.data()),
-                          log_padded_product_x_size, padded_A_ptr);
+        const sfixn *padded_A_ptr = thrust::raw_pointer_cast(padded_A.data());
+        const sfixn *padded_B_ptr = thrust::raw_pointer_cast(padded_Bs[i].data());
+        sfixn *extracted_A_ptr = thrust::raw_pointer_cast(extracted_A.data());
 
-    sfixn theta = primitive_root(log_padded_product_x_size + 1, prime);
-
-    scale_x_argument_dev(padded_A_copy, padded_product_x_size, theta, prime);
-    scale_x_argument_dev(padded_B_copy, padded_product_x_size, theta, prime);
-
-    sfixn *padded_A_copy_ptr = thrust::raw_pointer_cast(padded_A_copy.data());
-    sfixn *padded_B_copy_ptr = thrust::raw_pointer_cast(padded_B_copy.data());
-
+        extract_from_fft2_dev(product_x_size, product_y_size,
+                              extracted_A_ptr,
+                              log_padded_product_x_size, padded_A_ptr);
+        thetas[i] = primitive_root(log_padded_product_x_size + 1, primes[i]);
+        scale_x_argument_dev(padded_A_copy, padded_product_x_size, thetas[i], primes[i]);
+        scale_x_argument_dev(padded_B_copy, padded_product_x_size, thetas[i], primes[i]);
+    }
     cudaDeviceSynchronize();
     t_extract.stop();
 
     Timer t_ncc("ncc-fft"); t_ncc.start();
-
-    bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size,
-                             padded_product_x_size, log_padded_product_x_size,
-                             padded_A_copy_ptr, padded_B_copy_ptr, prime);
-
+    for (size_t i = 0; i < As.size(); ++i) {
+        sfixn *padded_A_copy_ptr = thrust::raw_pointer_cast(padded_A_copys[i].data());
+        sfixn *padded_B_copy_ptr = thrust::raw_pointer_cast(padded_B_copys[i].data());
+        bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size,
+                                 padded_product_x_size, log_padded_product_x_size,
+                                 padded_A_copy_ptr, padded_B_copy_ptr, primes[i]);
+    }
     cudaDeviceSynchronize();
     t_ncc.stop();
 
-    Timer t_ncc_extract("ncc-extract_and_scale"); t_ncc_extract.start();
+    Timer t_ncc_scale("ncc-scale"); t_ncc_scale.start();
+    for (size_t i = 0; i < As.size(); ++i) {
+        thrust::device_vector<sfixn>& padded_A_copy = padded_A_copys[i];
+        scale_x_argument_dev(padded_A_copy, padded_product_x_size, inv_mod(thetas[i], primes[i]), primes[i]);
+    }
+    cudaDeviceSynchronize();
+    t_ncc_scale.stop();
 
-    scale_x_argument_dev(padded_A_copy, padded_product_x_size, inv_mod(theta, prime), prime);
-    thrust::device_vector<sfixn> extracted_A_copy(product_x_size * product_y_size);
+    Timer t_ncc_extract("ncc-extract"); t_ncc_extract.start();
+    std::vector<thrust::device_vector<sfixn>> extracted_A_copys(As.size(), thrust::device_vector<sfixn>(product_x_size * product_y_size));
+    for (size_t i = 0; i < As.size(); ++i) {
+        const thrust::device_vector<sfixn>& padded_A_copy = padded_A_copys[i];
+        thrust::device_vector<sfixn>& extracted_A_copy = extracted_A_copys[i];
 
+        const sfixn *padded_A_copy_ptr = thrust::raw_pointer_cast(padded_A_copy.data());
+        sfixn *extracted_A_copy_ptr = thrust::raw_pointer_cast(extracted_A_copy.data());
+
+        extract_from_fft2_dev(product_x_size, product_y_size,
+                              extracted_A_copy_ptr,
+                              log_padded_product_x_size, padded_A_copy_ptr);
+    }
     cudaDeviceSynchronize();
     t_ncc_extract.stop();
-
-    extract_from_fft2_dev(product_x_size, product_y_size,
-                          thrust::raw_pointer_cast(extracted_A_copy.data()),
-                          log_padded_product_x_size,
-                          thrust::raw_pointer_cast(padded_A_copy.data()));
-
     total_timer.stop();
 
     return TwoConvolutionResult {
-        .cyclic_convolution = std::move(extracted_A),
-        .negacyclic_convolution = std::move(extracted_A_copy),
+        .cyclic_convolutions = std::move(extracted_As),
+        .negacyclic_convolutions = std::move(extracted_A_copys),
     };
 }
 
@@ -537,20 +564,21 @@ UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& 
 
     // Convert the univariate polynomials a and b to bivariate polynomials.
 
-    // assuming a machine word is 64 bit
-
-    auto compute_uv_sum_and_diff = [&] (sfixn prime) -> ModularSumAndDifferenceResult {
-        BivariateMPZPolynomial a_bivariate {convert_to_modular_bivariate(a, base, prime)};
-        BivariateMPZPolynomial b_bivariate {convert_to_modular_bivariate(b, base, prime)};
-        const TwoConvolutionResult& two_conv = two_convolution_2d_dev(a_bivariate, b_bivariate, base, prime);
-        const ModularSumAndDifferenceResult& mod_sum_and_diff = modular_sum_and_difference_dev(two_conv.cyclic_convolution, two_conv.negacyclic_convolution, prime);
-        return mod_sum_and_diff;
-    };
-
+    // assuming a machine word is 32 bit
     using namespace TwoConvolutionConstants;
-    ModularSumAndDifferenceResult uv_sum_and_diff1 = compute_uv_sum_and_diff(prime1);
-    ModularSumAndDifferenceResult uv_sum_and_diff2 = compute_uv_sum_and_diff(prime2);
-    ModularSumAndDifferenceResult uv_sum_and_diff3 = compute_uv_sum_and_diff(prime3);
+    const std::vector<sfixn> primes = {prime1, prime2, prime3};
+    std::vector<BivariateMPZPolynomial> bivariate_As(primes.size());
+    std::vector<BivariateMPZPolynomial> bivariate_Bs(primes.size());
+    for (size_t i = 0; i < primes.size(); ++i) {
+        bivariate_As[i] = convert_to_modular_bivariate(a, base, primes[i]);
+        bivariate_Bs[i] = convert_to_modular_bivariate(b, base, primes[i]);
+    }
+    std::vector<thrust::device_vector<sfixn>> bivariate_As_dev(bivariate_As.begin(), bivariate_As.end());
+    std::vector<thrust::device_vector<sfixn>> bivariate_Bs_dev(bivariate_Bs.begin(), bivariate_Bs.end());
+    const TwoConvolutionResult& two_conv = two_convolution_2d_dev(bivariate_As_dev, bivariate_Bs_dev, primes, base);
+    ModularSumAndDifferenceResult uv_sum_and_diff1 = modular_sum_and_difference_dev(two_conv.cyclic_convolutions[0], two_conv.negacyclic_convolutions[0], prime1);
+    ModularSumAndDifferenceResult uv_sum_and_diff2 = modular_sum_and_difference_dev(two_conv.cyclic_convolutions[1], two_conv.negacyclic_convolutions[1], prime2);
+    ModularSumAndDifferenceResult uv_sum_and_diff3 = modular_sum_and_difference_dev(two_conv.cyclic_convolutions[2], two_conv.negacyclic_convolutions[2], prime3);
     auto bitwidth = [](sfixn x) {
         return sizeof(sfixn) * 8 - __builtin_clz(x);
     };
@@ -562,7 +590,7 @@ UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& 
         uv_sum_and_diff2.modular_difference,
         uv_sum_and_diff3.modular_difference,
         base,
-        1 + base.M + base.N + bitwidth(base.K) + bitwidth(std::max(a.size(), b.size()))
+        1 + base.M + base.N + bitwidth(base.K) + bitwidth(std::max(a.size(), b.size())) + 64
     );
     result.resize(a.size() + b.size() - 1); // resize to the correct size
     return result;

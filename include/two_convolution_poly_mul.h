@@ -25,8 +25,8 @@ struct BivariateBase {
 };
 
 struct TwoConvolutionResult {
-    thrust::device_vector<sfixn> cyclic_convolution;
-    thrust::device_vector<sfixn> negacyclic_convolution;
+    std::vector<thrust::device_vector<sfixn>> cyclic_convolutions;
+    std::vector<thrust::device_vector<sfixn>> negacyclic_convolutions;
 };
 
 sfixn find_largest_bit_width_of_coefficients(const UnivariateMPZPolynomial&, const UnivariateMPZPolynomial&);
