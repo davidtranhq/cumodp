@@ -10,8 +10,54 @@
 #include "list_stockham.h"
 #include "inlines.h"
 
+#include <chrono>
+#include <iostream>
+#include <string>
+
+class Timer {
+public:
+    Timer(const std::string& name) : name_(name), running_(false) {}
+
+    void start() {
+        running_ = true;
+        start_ = std::chrono::high_resolution_clock::now();
+    }
+
+    void stop() {
+        if (!running_) return;
+        auto end = std::chrono::high_resolution_clock::now();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_).count();
+        std::cout << '\t' << name_ << " took " << ms << " ms\n";
+        running_ = false;
+    }
+
+private:
+    std::string name_;
+    std::chrono::high_resolution_clock::time_point start_;
+    bool running_;
+};
+
+class ScopedTimer {
+public:
+    ScopedTimer(const std::string& name)
+        : name_(name), start_(std::chrono::high_resolution_clock::now()) {}
+
+    ~ScopedTimer() {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(end - start_).count();
+        if (duration)
+            std::cout << '\t' << name_ << " took " << duration << " ms\n";
+    }
+
+private:
+    std::string name_;
+    std::chrono::high_resolution_clock::time_point start_;
+};
+
 int find_largest_bit_width_of_coefficients(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {
+    ScopedTimer t("find_largest_bit_width_of_coefficients");
     auto num_bits = [](const mpz_class& x) -> int {
         return mpz_sizeinbase(x.get_mpz_t(), 2);
     };
@@ -23,8 +69,9 @@ int find_largest_bit_width_of_coefficients(const UnivariateMPZPolynomial& a, con
     return largest_bit_width;
 }
 
-constexpr BivariateBase determine_bivariate_base(sfixn largest_bit_width)
+BivariateBase determine_bivariate_base(sfixn largest_bit_width)
 {
+    ScopedTimer t("determine_bivariate_base");
     using TwoConvolutionConstants::base_table;
 
     for (size_t i = 0; i < base_table.size(); ++i) {
@@ -36,6 +83,7 @@ constexpr BivariateBase determine_bivariate_base(sfixn largest_bit_width)
 
 BivariateMPZPolynomial convert_to_modular_bivariate(const UnivariateMPZPolynomial& p, const BivariateBase& base, sfixn prime)
 {
+    ScopedTimer t("convert_to_modular_bivariate");
     assert(base.K * base.M == base.N);
     std::vector<sfixn> bi(p.size() * base.K);
     const int block_size {base.M};
@@ -204,6 +252,7 @@ ModularSumAndDifferenceResult modular_sum_and_difference_dev(const thrust::devic
                                                             const thrust::device_vector<sfixn>& v,
                                                             sfixn prime)
 {
+    ScopedTimer t("modular_sum_and_difference_dev");
     assert(u.size() == v.size());
     thrust::device_vector<sfixn> modular_sum(u.size());
     thrust::transform(u.begin(), u.end(),
@@ -242,6 +291,7 @@ ModularSumAndDifferenceResult modular_sum_and_difference_dev(const thrust::devic
  **/
 void reconstruct_mpz_with_crt(mpz_t zp, const sfixn* a, const sfixn* b, const sfixn* c, const BivariateBase& base, int limb_bits)
 {
+    ScopedTimer t("reconstruct_mpz_with_crt");
     using namespace TwoConvolutionConstants;
 	mpz_t zn;
 	mpz_init2(zp, limb_bits);
@@ -344,6 +394,7 @@ UnivariateMPZPolynomial recover_product_host(
     const BivariateBase& base,
     int limb_bits)
 {
+    ScopedTimer t("recover_product_host");
     assert(sum1.size() == sum2.size());
     assert(diff1.size() == diff2.size());
     assert(sum1.size() == diff1.size());
@@ -381,10 +432,10 @@ UnivariateMPZPolynomial recover_product_host(
 
 TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& A, const thrust::device_vector<sfixn>& B, const BivariateBase& base, sfixn prime)
 {
+    Timer total_timer("two_convolution_2d_dev"); total_timer.start();
+
     sfixn product_x_size = base.K;
     sfixn product_y_size = A.size() / base.K + B.size() / base.K - 1;
-
-    // assert product_x_size is a power of 2
 
     auto num_bits = [](sfixn x) -> sfixn {
         return sizeof(sfixn) * 8 - __builtin_clz(x);
@@ -399,48 +450,77 @@ TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& 
     log_padded_product_y_size = std::max(log_padded_product_x_size, log_padded_product_y_size);
 
     sfixn padded_product_x_size = 1 << log_padded_product_x_size;
-    sfixn padded_product_y_size =  1 << log_padded_product_y_size;
+    sfixn padded_product_y_size = 1 << log_padded_product_y_size;
+
+    Timer t_expand("expand"); t_expand.start();
 
     thrust::device_vector<sfixn> padded_A(padded_product_x_size * padded_product_y_size);
-    const sfixn *A_ptr = thrust::raw_pointer_cast(A.data());
-    sfixn *padded_A_ptr = thrust::raw_pointer_cast(padded_A.data());
-    expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_A_ptr, product_x_size, A.size() / base.K, A_ptr);
-
     thrust::device_vector<sfixn> padded_B(padded_product_x_size * padded_product_y_size);
+
+    const sfixn *A_ptr = thrust::raw_pointer_cast(A.data());
     const sfixn *B_ptr = thrust::raw_pointer_cast(B.data());
+    sfixn *padded_A_ptr = thrust::raw_pointer_cast(padded_A.data());
     sfixn *padded_B_ptr = thrust::raw_pointer_cast(padded_B.data());
+
+    expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_A_ptr, product_x_size, A.size() / base.K, A_ptr);
     expand_to_fft2_dev(log_padded_product_x_size, log_padded_product_y_size, padded_B_ptr, product_x_size, B.size() / base.K, B_ptr);
 
-    // The output is written to padded_A, so we store a copy of it for when we compute the negacyclic convolution
     cudaDeviceSynchronize();
+    t_expand.stop();
+
+    Timer t_fft("fft"); t_fft.start();
+
     thrust::device_vector<sfixn> padded_A_copy(padded_A);
     thrust::device_vector<sfixn> padded_B_copy(padded_B);
-    bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size, padded_product_x_size, log_padded_product_x_size, padded_A_ptr, padded_B_ptr, prime);
-    // TODO: bi_stockham_poly_mul_dev perfomrs FFT on B here, maybe we can reuse this result for NCC 
+
+    bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size,
+                             padded_product_x_size, log_padded_product_x_size,
+                             padded_A_ptr, padded_B_ptr, prime);
+
     thrust::device_vector<sfixn> extracted_A(product_x_size * product_y_size);
     cudaDeviceSynchronize();
-    extract_from_fft2_dev(product_x_size, product_y_size, thrust::raw_pointer_cast(extracted_A.data()), log_padded_product_x_size, padded_A_ptr);
+    t_fft.stop();
 
-    // theta is a 2(padded K)th primitive root of unity
-    // something to fix here, not that clean, num_bits(base.K) computed twice (once at the start of the function?)
+    Timer t_extract("extract_and_scale"); t_extract.start();
+
+    extract_from_fft2_dev(product_x_size, product_y_size,
+                          thrust::raw_pointer_cast(extracted_A.data()),
+                          log_padded_product_x_size, padded_A_ptr);
+
     sfixn theta = primitive_root(log_padded_product_x_size + 1, prime);
-    scale_x_argument_dev(padded_A_copy, padded_product_x_size, theta, prime);    
+
+    scale_x_argument_dev(padded_A_copy, padded_product_x_size, theta, prime);
     scale_x_argument_dev(padded_B_copy, padded_product_x_size, theta, prime);
 
-    // padded_A_copy will store the result of the negacyclic convolution
     sfixn *padded_A_copy_ptr = thrust::raw_pointer_cast(padded_A_copy.data());
     sfixn *padded_B_copy_ptr = thrust::raw_pointer_cast(padded_B_copy.data());
 
     cudaDeviceSynchronize();
-    bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size, padded_product_x_size, log_padded_product_x_size, padded_A_copy_ptr, padded_B_copy_ptr, prime);
+    t_extract.stop();
+
+    Timer t_ncc("ncc-fft"); t_ncc.start();
+
+    bi_stockham_poly_mul_dev(padded_product_y_size, log_padded_product_y_size,
+                             padded_product_x_size, log_padded_product_x_size,
+                             padded_A_copy_ptr, padded_B_copy_ptr, prime);
 
     cudaDeviceSynchronize();
+    t_ncc.stop();
+
+    Timer t_ncc_extract("ncc-extract_and_scale"); t_ncc_extract.start();
+
     scale_x_argument_dev(padded_A_copy, padded_product_x_size, inv_mod(theta, prime), prime);
-    
-    
     thrust::device_vector<sfixn> extracted_A_copy(product_x_size * product_y_size);
+
     cudaDeviceSynchronize();
-    extract_from_fft2_dev(product_x_size, product_y_size, thrust::raw_pointer_cast(extracted_A_copy.data()), log_padded_product_x_size, padded_A_copy_ptr);
+    t_ncc_extract.stop();
+
+    extract_from_fft2_dev(product_x_size, product_y_size,
+                          thrust::raw_pointer_cast(extracted_A_copy.data()),
+                          log_padded_product_x_size,
+                          thrust::raw_pointer_cast(padded_A_copy.data()));
+
+    total_timer.stop();
 
     return TwoConvolutionResult {
         .cyclic_convolution = std::move(extracted_A),
@@ -448,8 +528,10 @@ TwoConvolutionResult two_convolution_2d_dev(const thrust::device_vector<sfixn>& 
     };
 }
 
+
 UnivariateMPZPolynomial two_convolution_poly_mul(const UnivariateMPZPolynomial& a, const UnivariateMPZPolynomial& b)
 {
+    ScopedTimer t("two_convolution_poly_mul");
     BivariateBase base {determine_bivariate_base(find_largest_bit_width_of_coefficients(a, b))};
     assert(base.K * base.M == base.N);
 

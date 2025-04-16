@@ -9,7 +9,7 @@ OBJS := $(SRCS:.cpp=.o)
 CXXFLAGS := \
 	-Wall \
 	-Werror \
-	-std=c++20 \
+	-std=c++14\
 	-O2 \
 	-g
 

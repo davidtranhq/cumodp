@@ -179,8 +179,6 @@ int main(int argc, char* argv[])
     }
 
     std::vector<std::string> input_files = {
-        "n32_m32_p10000000000.test",
-        "n64_m64_p10000000000.test",
         "n128_m128_p10000000000.test",
         "n256_m256_p10000000000.test",
         "n512_m512_p10000000000.test",
